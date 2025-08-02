@@ -357,6 +357,84 @@ class ElevenLabsService extends EventEmitter {
       }
     }
   }
+
+  /**
+   * Fetch conversation transcript from ElevenLabs Conversational AI API
+   */
+  async getConversationTranscript(conversationId) {
+    try {
+      logger.info('Fetching conversation transcript from ElevenLabs', { conversationId })
+      
+      const response = await axios.get(`${this.baseUrl}/convai/conversations/${conversationId}`, {
+        headers: {
+          'xi-api-key': this.apiKey,
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000
+      })
+
+      const conversationData = response.data
+      
+      // Extract and format transcript for our system
+      const transcript = this.formatElevenLabsTranscript(conversationData)
+      
+      logger.info('Successfully retrieved conversation transcript', {
+        conversationId,
+        messagesCount: transcript.length,
+        duration: conversationData.duration_seconds || 'unknown'
+      })
+
+      return {
+        transcript,
+        metadata: {
+          conversationId,
+          duration: conversationData.duration_seconds,
+          startTime: conversationData.start_time,
+          endTime: conversationData.end_time,
+          status: conversationData.status,
+          rawData: conversationData
+        }
+      }
+      
+    } catch (error) {
+      logger.error('Failed to fetch conversation transcript from ElevenLabs', {
+        conversationId,
+        error: error.message,
+        statusCode: error.response?.status,
+        responseData: error.response?.data
+      })
+
+      throw new Error(`Failed to retrieve conversation transcript: ${error.message}`)
+    }
+  }
+
+  /**
+   * Format ElevenLabs conversation data into our standard transcript format
+   */
+  formatElevenLabsTranscript(conversationData) {
+    try {
+      // ElevenLabs transcript format may vary, adapt as needed
+      const messages = conversationData.transcript || conversationData.messages || []
+      
+      return messages.map((message, index) => ({
+        id: message.id || `msg_${index}`,
+        speaker: message.role === 'user' ? 'You' : (message.speaker || 'AI'),
+        message: message.text || message.content || message.message,
+        timestamp: message.timestamp || message.created_at,
+        isFinal: true,
+        metadata: {
+          originalRole: message.role,
+          originalSpeaker: message.speaker,
+          confidence: message.confidence,
+          duration: message.duration
+        }
+      }))
+      
+    } catch (error) {
+      logger.error('Error formatting ElevenLabs transcript', { error: error.message })
+      return []
+    }
+  }
 }
 
 module.exports = new ElevenLabsService()

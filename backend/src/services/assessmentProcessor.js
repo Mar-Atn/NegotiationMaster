@@ -78,9 +78,26 @@ class AssessmentProcessor {
 
       console.log(`✅ Assessment completed for conversation ${conversationId} in ${Date.now() - startTime}ms`)
       
-      // Queue feedback generation
+      // Queue feedback generation or process directly if Redis unavailable
       const assessmentQueueService = require('./assessmentQueue')
-      await assessmentQueueService.queueFeedbackGeneration(assessmentId, assessmentResults)
+      
+      try {
+        await assessmentQueueService.queueFeedbackGeneration(assessmentId, assessmentResults)
+      } catch (queueError) {
+        console.warn('⚠️ Feedback queue unavailable, saving AI feedback directly to database')
+        
+        // Save AI feedback directly to database when queue is unavailable
+        if (assessmentResults && assessmentResults.aiGenerated) {
+          await db('conversation_assessments')
+            .where('id', assessmentId)
+            .update({
+              ai_feedback: JSON.stringify(assessmentResults),
+              status: 'completed',
+              completed_at: new Date()
+            })
+          console.log('✅ AI feedback saved directly to database')
+        }
+      }
       
       return {
         assessmentId,
@@ -184,88 +201,112 @@ class AssessmentProcessor {
   }
 
   buildNegotiationAnalysisPrompt(transcript, scenario) {
-    return `You are an expert negotiation coach analyzing a conversation transcript. Please analyze this negotiation conversation and provide a detailed assessment.
+    // Format transcript for analysis
+    const formattedTranscript = Array.isArray(transcript) 
+      ? transcript.map(entry => `${entry.speaker}: ${entry.message}`).join('\n')
+      : (transcript || 'No transcript available')
+
+    return `You are an expert negotiation coach with advanced knowledge of negotiation theory and practice. You specialize in providing constructive, actionable feedback that helps business professionals develop negotiation skills through specific analysis of their conversation performance.
+
+Your role is to analyze this conversation and generate personalized feedback (300-400 words) that follows academic negotiation principles while being immediately practical for executive-level professionals.
 
 SCENARIO CONTEXT:
-${scenario ? `Title: ${scenario.title}\nDescription: ${scenario.description}\nDifficulty: ${scenario.difficulty_level}` : 'Context not available'}
+${scenario ? `
+Title: ${scenario.title}
+Description: ${scenario.description}
+Difficulty Level: ${scenario.difficulty_level}
+Learning Objectives: Professional negotiation skill development with focus on real-world application
+` : 'Scenario context not available - analyze based on conversation content'}
 
 CONVERSATION TRANSCRIPT:
-${transcript || 'No transcript available'}
+${formattedTranscript}
 
-Please analyze this negotiation across three key dimensions and provide scores (0-100) for each:
+ANALYSIS FRAMEWORK - Evaluate across THREE CRITICAL DIMENSIONS:
 
-1. CLAIMING VALUE (Competitive/Distributive Negotiation)
-   - Position advocacy and assertiveness
-   - BATNA utilization and leverage
-   - Anchoring and concession strategies
-   - Information gathering and probing
+**DIMENSION 1: CLAIMING VALUE (Competitive Negotiation)**
+Core Assessment Areas:
+- ZOPA (Zone of Possible Agreement): Did they identify and explore the range where deals can be made?
+- BATNA (Best Alternative to Negotiated Agreement): How well did they understand and communicate their alternatives?
+- Reciprocity Concept: Were concessions made strategically with expectation of reciprocity?
+- Prisoner's Dilemma Dynamics: Did they balance competitive vs. cooperative strategies effectively?
 
-2. CREATING VALUE (Collaborative/Integrative Negotiation) 
-   - Interest identification vs. positions
-   - Creative problem-solving and options generation
-   - Trade-off analysis and package deals
-   - Mutual benefit exploration
+**DIMENSION 2: CREATING VALUE (Harvard's 4 Principles)**
+Core Assessment Areas:
+- Separate People from Problems: Did they maintain relationships while addressing business issues?
+- Focus on Interests, Not Positions: Did they explore underlying needs beyond stated positions?
+- Generate Options for Mutual Gain: Were creative win-win solutions developed?
+- Use Objective Criteria: Were decisions based on fair standards and benchmarks?
 
-3. RELATIONSHIP MANAGEMENT
-   - Trust building and rapport
-   - Communication effectiveness
-   - Emotional intelligence and empathy
-   - Conflict management and diplomacy
+**DIMENSION 3: RELATIONSHIP MANAGEMENT**
+Core Assessment Areas:
+- Trust Building: Did they establish credibility through transparency and follow-through?
+- Communication Style: How effective were their listening and communication approaches?
+- Conflict Resolution: Were disagreements managed constructively without damaging relationships?
+- Long-term Thinking: Did they consider future interactions and reputation impact?
 
-Please respond in this EXACT JSON format:
+REQUIRED OUTPUT FORMAT (Comprehensive Professional Feedback - JSON):
 {
-  "claimingValue": {
-    "score": 75,
-    "analysis": {
-      "techniques": ["Anchoring", "BATNA Reference"],
-      "reasoning": "Brief explanation of scoring"
+  "executiveSummary": "50-75 word overall performance assessment highlighting key strengths and primary development opportunities",
+  "whatWasDoneWell": {
+    "content": "100-150 words with specific examples and theory connections",
+    "examples": [
+      {
+        "quote": "Exact quote from conversation",
+        "concept": "Negotiation theory/technique applied",
+        "impact": "How this specific action contributed to positive outcomes"
+      }
+    ]
+  },
+  "areasForImprovement": {
+    "content": "100-150 words with specific missed opportunities and actionable suggestions",
+    "examples": [
+      {
+        "quote": "Exact quote showing missed opportunity",
+        "issue": "What was suboptimal about this approach",
+        "suggestion": "Specific alternative approach with clear rationale"
+      }
+    ]
+  },
+  "nextStepsFocusAreas": "50-75 words with prioritized development recommendations and specific practice suggestions",
+  "dimensionScores": {
+    "claimingValue": {
+      "score": 75,
+      "assessment": "ZOPA exploration, BATNA utilization, reciprocity dynamics, competitive positioning analysis",
+      "keyStrengths": ["Specific strengths observed"],
+      "developmentFocus": "Specific areas for improvement with theory basis"
+    },
+    "creatingValue": {
+      "score": 82,
+      "assessment": "Harvard principles application, interest vs position focus, option generation, objective criteria use",
+      "keyStrengths": ["Specific strengths observed"], 
+      "developmentFocus": "Specific areas for improvement with theory basis"
+    },
+    "relationshipManagement": {
+      "score": 88,
+      "assessment": "Trust building, communication effectiveness, conflict resolution, long-term thinking analysis",
+      "keyStrengths": ["Specific strengths observed"],
+      "developmentFocus": "Specific areas for improvement with theory basis"
     }
   },
-  "creatingValue": {
-    "score": 82,
-    "analysis": {
-      "techniques": ["Interest Exploration", "Option Generation"],
-      "reasoning": "Brief explanation of scoring"
-    }
-  },
-  "relationshipManagement": {
-    "score": 88,
-    "analysis": {
-      "techniques": ["Active Listening", "Empathy"],
-      "reasoning": "Brief explanation of scoring"
-    }
-  },
-  "conversationFlow": {
-    "totalSentences": 25,
-    "totalWords": 500,
-    "communicationStyle": "collaborative",
-    "pacing": "appropriate"
-  },
-  "emotionalIntelligence": {
-    "empathyScore": 85,
-    "sentimentPolarity": "positive",
-    "emotionalControl": "high"
-  },
-  "languagePatterns": {
-    "patterns": ["Hypothetical thinking", "Reasoning and justification"],
-    "persuasionTechniques": ["Social proof", "Reciprocity"]
-  },
-  "strengths": [
-    "Strong collaborative approach with effective interest exploration",
-    "Excellent relationship management and trust building"
-  ],
-  "developmentAreas": [
-    "Could strengthen competitive positioning and value claiming",
-    "Practice more systematic concession strategies"
-  ],
   "specificExamples": [
     {
-      "quote": "What matters most to you in this agreement?",
-      "technique": "Interest Exploration",
+      "quote": "Exact conversation quote",
+      "technique": "Specific negotiation concept/technique",
       "impact": "Effectively moved beyond positions to underlying needs"
     }
   ]
-}`
+}
+
+CRITICAL REQUIREMENTS:
+1. ALL quotes must be EXACT from the conversation transcript - no paraphrasing
+2. Connect every observation to specific negotiation theory (Harvard Method, BATNA, ZOPA, etc.)
+3. Provide actionable, specific suggestions that business professionals can implement immediately
+4. Maintain professional, executive-appropriate tone throughout
+5. Focus on behavior and technique, not personality judgments
+6. Ensure scores reflect actual performance based on conversation evidence
+7. Target 300-400 total words across all sections for comprehensive yet concise feedback
+
+Generate your analysis now based on the provided conversation transcript and scenario context.`
   }
 
   parseAIResponse(aiResponse) {
@@ -673,10 +714,10 @@ Please respond in this EXACT JSON format:
   }
 }
 
-// Export the processor function for Bull queue
-module.exports = {
-  processConversationAnalysis: (job) => {
-    const processor = new AssessmentProcessor()
-    return processor.processConversationAnalysis(job)
-  }
+// Export both the class and the processor function for Bull queue
+module.exports = AssessmentProcessor
+
+module.exports.processConversationAnalysis = (job) => {
+  const processor = new AssessmentProcessor()
+  return processor.processConversationAnalysis(job)
 }

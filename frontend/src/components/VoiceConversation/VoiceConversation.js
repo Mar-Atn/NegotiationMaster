@@ -143,6 +143,23 @@ const VoiceConversation = ({
         }
         break
         
+      // Additional message types that might be used
+      case 'user_speech_complete':
+      case 'speech_complete':
+        if (message.transcript && message.transcript.trim()) {
+          console.log('👤 User speech complete:', message.transcript)
+          addMessage('You', message.transcript)
+        }
+        break
+        
+      case 'agent_speech_complete':
+      case 'response_complete':
+        if (message.text && message.text.trim()) {
+          console.log('🤖 Agent speech complete:', message.text)
+          addMessage(character?.name || 'AI', message.text)
+        }
+        break
+        
       case 'audio_event':
         console.log('🔊 Audio event received')
         setIsSpeaking(true)
@@ -784,20 +801,66 @@ const VoiceConversation = ({
       // End ElevenLabs conversation using SDK pattern
       await conversation.endSession()
       
+      // Debug conversation data capture
+      console.log('🔍 Conversation end debug:', {
+        transcriptLength: transcript.length,
+        conversationHistoryLength: conversationHistory.length,
+        elevenLabsId: conversation?.id || conversation?.conversationId || sessionId,
+        conversationTime,
+        hasConversation: !!conversation
+      })
+
+      // Create fallback transcript if no messages captured
+      let finalTranscript = transcript
+      if (transcript.length === 0 && conversationTime > 30) {
+        console.warn('⚠️ No transcript captured, creating fallback with conversation duration data')
+        finalTranscript = [
+          {
+            speaker: 'System',
+            message: `Voice conversation completed with ${character?.name || 'AI Character'}`,
+            id: Date.now(),
+            timestamp: new Date().toISOString()
+          },
+          {
+            speaker: 'You',
+            message: '[Voice conversation - transcript not captured]',
+            id: Date.now() + 1,
+            timestamp: new Date().toISOString()
+          },
+          {
+            speaker: character?.name || 'AI',
+            message: '[AI responses during voice conversation]',
+            id: Date.now() + 2,
+            timestamp: new Date().toISOString()
+          }
+        ]
+      }
+
       // Prepare conversation data for assessment
       const conversationResults = {
         negotiationId: negotiationId || `negotiation-${Date.now()}`,
-        transcript: transcript,
-        conversationHistory: conversationHistory,
+        elevenLabsConversationId: conversation?.id || conversation?.conversationId || sessionId,
+        transcript: finalTranscript,
+        conversationHistory: conversationHistory.length > 0 ? conversationHistory : [
+          { speaker: 'System', text: `Voice conversation with ${character?.name || 'AI Character'}` }
+        ],
         duration: conversationTime,
         character: character,
         scenario: scenario,
         endedAt: new Date().toISOString(),
         sessionMetrics: {
-          totalMessages: transcript.length,
-          userMessages: transcript.filter(t => t.speaker === 'You' || t.speaker === 'user').length,
-          aiMessages: transcript.filter(t => t.speaker !== 'You' && t.speaker !== 'user').length,
-          averageResponseTime: 2.5 // This would be calculated from actual timing
+          totalMessages: finalTranscript.length,
+          userMessages: finalTranscript.filter(t => t.speaker === 'You' || t.speaker === 'user').length,
+          aiMessages: finalTranscript.filter(t => t.speaker !== 'You' && t.speaker !== 'user').length,
+          averageResponseTime: 2.5,
+          hadFallbackTranscript: transcript.length === 0 && finalTranscript.length > 0
+        },
+        metadata: {
+          source: 'elevenlabs_voice_conversation',
+          hasElevenLabsId: !!(conversation?.id || conversation?.conversationId || sessionId),
+          clientTranscriptLength: transcript.length,
+          usedFallbackTranscript: transcript.length === 0 && finalTranscript.length > 0,
+          conversationDuration: conversationTime
         }
       }
       

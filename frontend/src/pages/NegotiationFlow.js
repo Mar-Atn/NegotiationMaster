@@ -107,6 +107,7 @@ const NegotiationFlow = () => {
         scenario: scenario,
         character: character,
         transcript: conversationResults.transcript,
+        elevenLabsConversationId: conversationResults.elevenLabsConversationId,
         conversationHistory: conversationResults.conversationHistory,
         duration: conversationResults.duration,
         sessionMetrics: conversationResults.sessionMetrics,

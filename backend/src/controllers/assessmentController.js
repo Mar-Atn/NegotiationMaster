@@ -888,22 +888,46 @@ class AssessmentController {
 
       // Try to generate real AI feedback using assessment processor
       const AssessmentProcessor = require('../services/assessmentProcessor')
+      const elevenLabsService = require('../services/elevenLabsService')
       const processor = new AssessmentProcessor()
       
-      // Create sample conversation data for testing
+      // Try to get real conversation transcript from ElevenLabs
+      let realTranscript = null
+      let conversationDuration = 180
+      
+      try {
+        console.log('🎯 Attempting to fetch real conversation transcript from ElevenLabs...')
+        // Try with negotiationId first, then check for ElevenLabs conversation ID in request body
+        const requestBody = req.body || {}
+        const elevenLabsConversationId = requestBody.elevenLabsConversationId || negotiationId
+        
+        console.log('🔍 Using conversation ID for ElevenLabs API:', elevenLabsConversationId)
+        const elevenLabsData = await elevenLabsService.getConversationTranscript(elevenLabsConversationId)
+        realTranscript = elevenLabsData.transcript
+        conversationDuration = elevenLabsData.metadata.duration || 180
+        console.log('✅ Got real conversation transcript from ElevenLabs!', { 
+          messagesCount: realTranscript?.length, 
+          conversationId: elevenLabsConversationId 
+        })
+      } catch (elevenLabsError) {
+        console.warn('⚠️ Could not fetch ElevenLabs transcript, using demo data:', elevenLabsError.message)
+      }
+      
+      // Create conversation data for assessment (real or demo)
       const testConversationData = {
         conversationId: negotiationId,
         userId: 'demo-user',
         scenarioId: 'demo-scenario',
-        transcript: 'User: I need this car for $18000. Dealer: Best I can do is $22000. User: How about $20000? Dealer: I can do $21000 final. User: That sounds reasonable, let\'s proceed.',
+        transcript: realTranscript || 'User: I need this car for $18000. Dealer: Best I can do is $22000. User: How about $20000? Dealer: I can do $21000 final. User: That sounds reasonable, let\'s proceed.',
         voiceMetrics: { 
-          duration: 180, 
+          duration: conversationDuration, 
           wordsPerMinute: 120, 
           pauseCount: 8 
         },
         metadata: { 
-          sessionType: 'demo',
-          difficulty: 'intermediate'
+          sessionType: realTranscript ? 'real_elevenlabs' : 'demo',
+          difficulty: 'intermediate',
+          source: realTranscript ? 'elevenlabs_api' : 'mock_data'
         }
       }
 
@@ -924,10 +948,17 @@ class AssessmentController {
         
         if (assessment && assessment.ai_feedback) {
           console.log('✅ Real AI feedback generated successfully!')
+          const feedbackData = JSON.parse(assessment.ai_feedback)
           return res.json({
             success: true,
-            data: JSON.parse(assessment.ai_feedback)
+            data: {
+              ...feedbackData,
+              negotiationId,
+              completedAt: assessment.completed_at || new Date()
+            }
           })
+        } else {
+          console.log('ℹ️ No AI assessment found in database, using mock data')
         }
       } catch (aiError) {
         console.warn('⚠️ AI feedback generation failed, using fallback:', aiError.message)

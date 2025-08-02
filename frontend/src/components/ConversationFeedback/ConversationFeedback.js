@@ -152,6 +152,10 @@ const ConversationFeedback = ({
     )
   }
 
+  // Debug: Log conversation data to check transcript availability
+  console.log('📊 ConversationFeedback received conversationData:', conversationData)
+  console.log('📝 Transcript data:', conversationData?.transcript)
+
   // Use backend data if available, otherwise use mock data
   const data = feedbackData || mockFeedbackData
   const transcript = conversationData?.transcript || mockTranscript
