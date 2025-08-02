@@ -1,0 +1,241 @@
+/* Ubuntu-inspired global styles */
+
+/* Ensure Ubuntu font is applied everywhere */
+* {
+  font-family: 'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Ubuntu-style selection */
+::selection {
+  background-color: rgba(233, 84, 32, 0.2);
+  color: #333333;
+}
+
+::-moz-selection {
+  background-color: rgba(233, 84, 32, 0.2);
+  color: #333333;
+}
+
+/* Ubuntu-style scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F7F7F7;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #AEA79F;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #999999;
+}
+
+/* Ubuntu-style focus outlines */
+.MuiButton-root:focus-visible,
+.MuiIconButton-root:focus-visible,
+.MuiTextField-root input:focus {
+  outline: 2px solid #E95420;
+  outline-offset: 2px;
+}
+
+/* Ubuntu-style animations */
+.ubuntu-fade-in {
+  animation: ubuntuFadeIn 0.4s ease-out;
+}
+
+@keyframes ubuntuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ubuntu-style card hover effects */
+.MuiCard-root {
+  transition: all 0.2s ease-in-out;
+}
+
+.MuiCard-root:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ubuntu-style button hover effects */
+.MuiButton-contained {
+  transition: all 0.2s ease-in-out;
+}
+
+.MuiButton-contained:hover {
+  transform: translateY(-1px);
+}
+
+/* Ubuntu-style text colors */
+.ubuntu-text-primary {
+  color: #333333 !important;
+}
+
+.ubuntu-text-secondary {
+  color: #666666 !important;
+}
+
+.ubuntu-text-muted {
+  color: #AEA79F !important;
+}
+
+/* Ubuntu-style backgrounds */
+.ubuntu-bg-light {
+  background-color: #F7F7F7 !important;
+}
+
+.ubuntu-bg-white {
+  background-color: #FFFFFF !important;
+}
+
+/* Ubuntu-style spacing utilities */
+.ubuntu-spacing-xs {
+  margin: 8px;
+}
+
+.ubuntu-spacing-sm {
+  margin: 16px;
+}
+
+.ubuntu-spacing-md {
+  margin: 24px;
+}
+
+.ubuntu-spacing-lg {
+  margin: 32px;
+}
+
+/* Ubuntu-style border radius */
+.ubuntu-rounded {
+  border-radius: 8px !important;
+}
+
+.ubuntu-rounded-sm {
+  border-radius: 4px !important;
+}
+
+.ubuntu-rounded-lg {
+  border-radius: 12px !important;
+}
+
+/* Ubuntu-style shadows */
+.ubuntu-shadow-sm {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.ubuntu-shadow-md {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.ubuntu-shadow-lg {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Ubuntu-style loading indicators */
+.MuiCircularProgress-root {
+  color: #E95420 !important;
+}
+
+.MuiLinearProgress-root {
+  background-color: rgba(174, 167, 159, 0.2) !important;
+}
+
+.MuiLinearProgress-bar {
+  background-color: #E95420 !important;
+}
+
+/* Ubuntu-style form elements */
+.MuiTextField-root .MuiOutlinedInput-root {
+  border-radius: 6px;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #E95420;
+  border-width: 2px;
+}
+
+/* Ubuntu-style alerts */
+.MuiAlert-root {
+  border-radius: 8px !important;
+  border: 1px solid;
+}
+
+.MuiAlert-standardSuccess {
+  background-color: rgba(14, 132, 32, 0.08) !important;
+  border-color: #0E8420 !important;
+  color: #0A5D17 !important;
+}
+
+.MuiAlert-standardWarning {
+  background-color: rgba(249, 149, 0, 0.08) !important;
+  border-color: #F99500 !important;
+  color: #CC7A00 !important;
+}
+
+.MuiAlert-standardError {
+  background-color: rgba(199, 22, 43, 0.08) !important;
+  border-color: #C7162B !important;
+  color: #A01122 !important;
+}
+
+.MuiAlert-standardInfo {
+  background-color: rgba(0, 122, 166, 0.08) !important;
+  border-color: #007AA6 !important;
+  color: #005577 !important;
+}
+
+/* Ubuntu-style typography enhancements */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 300 !important;
+  color: #333333 !important;
+}
+
+.MuiTypography-h1 {
+  font-weight: 300 !important;
+}
+
+.MuiTypography-h2 {
+  font-weight: 300 !important;
+}
+
+.MuiTypography-h3 {
+  font-weight: 300 !important;
+}
+
+.MuiTypography-h4 {
+  font-weight: 300 !important;
+}
+
+.MuiTypography-h5 {
+  font-weight: 400 !important;
+}
+
+.MuiTypography-h6 {
+  font-weight: 500 !important;
+}
+
+/* Ubuntu-style consistent spacing */
+.MuiContainer-root {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+
+@media (max-width: 600px) {
+  .MuiContainer-root {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}

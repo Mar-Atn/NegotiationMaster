@@ -1,0 +1,201 @@
+name: Database Backup
+
+on:
+  schedule:
+    # Daily backup at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      backup_type:
+        description: 'Type of backup to perform'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - schema
+          - version
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PostgreSQL client
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client
+
+    - name: Create backup directories
+      run: |
+        mkdir -p database/backups
+        mkdir -p database/schema-versions
+
+    - name: Perform database backup
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      run: |
+        case "${{ github.event.inputs.backup_type || 'full' }}" in
+          full)
+            ./scripts/schema-backup.sh backup
+            ;;
+          schema)
+            ./scripts/schema-backup.sh schema
+            ;;
+          version)
+            VERSION_NAME="automated-$(date +%Y.%m.%d)"
+            ./scripts/schema-backup.sh version "$VERSION_NAME"
+            ;;
+        esac
+
+    - name: Upload backup to S3
+      if: success()
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      run: |
+        # Install AWS CLI
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+        
+        # Upload backups to S3
+        DATE=$(date +%Y/%m/%d)
+        
+        if [ -d "database/backups" ] && [ "$(ls -A database/backups)" ]; then
+          aws s3 sync database/backups/ s3://${{ secrets.S3_BACKUP_BUCKET }}/backups/$DATE/ \
+            --storage-class GLACIER_IR
+        fi
+        
+        if [ -d "database/schema-versions" ] && [ "$(ls -A database/schema-versions)" ]; then
+          aws s3 sync database/schema-versions/ s3://${{ secrets.S3_BACKUP_BUCKET }}/schema-versions/ \
+            --exclude "*.sql" --include "*/info.json" --include "*/README.md"
+        fi
+
+    - name: Clean up old local backups
+      run: |
+        # Keep only last 7 days of local backups
+        find database/backups -name "*.sql*" -mtime +7 -delete || true
+        
+        # Keep only last 30 days of schema snapshots (not versions)
+        find database/schema-versions -name "schema_*.sql" -mtime +30 -delete || true
+
+    - name: Notify on failure
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const { number } = context.issue;
+          
+          await github.rest.issues.create({
+            owner,
+            repo,
+            title: `Database backup failed - ${new Date().toISOString().split('T')[0]}`,
+            body: `
+            ## Database Backup Failure
+            
+            The automated database backup job failed.
+            
+            **Details:**
+            - Workflow: ${context.workflow}
+            - Run ID: ${context.runId}
+            - Trigger: ${context.eventName}
+            - Time: ${new Date().toISOString()}
+            
+            Please check the workflow logs and ensure database connectivity and credentials are correct.
+            
+            [View Workflow Run](https://github.com/${owner}/${repo}/actions/runs/${context.runId})
+            `,
+            labels: ['bug', 'ops', 'backup']
+          });
+
+  schema-drift-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PostgreSQL client
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client
+
+    - name: Check for schema drift
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      run: |
+        # Get current schema
+        pg_dump "$DATABASE_URL" --schema-only --no-owner --no-privileges > current_schema.sql
+        
+        # Compare with last known good schema
+        if [ -f "database/schema-versions/production/schema.sql" ]; then
+          if ! diff -q database/schema-versions/production/schema.sql current_schema.sql > /dev/null; then
+            echo "Schema drift detected!"
+            echo "SCHEMA_DRIFT=true" >> $GITHUB_ENV
+            
+            # Create diff file
+            diff -u database/schema-versions/production/schema.sql current_schema.sql > schema_drift.diff || true
+          else
+            echo "No schema drift detected"
+          fi
+        else
+          echo "No baseline schema found - creating initial baseline"
+          mkdir -p database/schema-versions/production
+          cp current_schema.sql database/schema-versions/production/schema.sql
+        fi
+
+    - name: Create schema drift issue
+      if: env.SCHEMA_DRIFT == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const diff = fs.readFileSync('schema_drift.diff', 'utf8');
+          
+          const { owner, repo } = context.repo;
+          
+          await github.rest.issues.create({
+            owner,
+            repo,
+            title: `Schema drift detected - ${new Date().toISOString().split('T')[0]}`,
+            body: `
+            ## Database Schema Drift Detected
+            
+            The production database schema has drifted from the expected baseline.
+            
+            **Detected Changes:**
+            \`\`\`diff
+            ${diff}
+            \`\`\`
+            
+            **Action Required:**
+            1. Review the changes to ensure they are intentional
+            2. If intentional, update the baseline schema
+            3. If unintentional, investigate and fix the drift
+            4. Consider adding migration scripts if needed
+            
+            **Commands to update baseline:**
+            \`\`\`bash
+            ./scripts/schema-backup.sh version production
+            \`\`\`
+            `,
+            labels: ['ops', 'database', 'drift']
+          });
+
+    - name: Commit baseline schema if new
+      if: env.SCHEMA_DRIFT != 'true' && !contains(github.event.head_commit.message, 'schema baseline')
+      run: |
+        if [ ! -f "database/schema-versions/production/schema.sql" ]; then
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add database/schema-versions/production/
+          git commit -m "chore: add initial schema baseline"
+          git push
+        fi

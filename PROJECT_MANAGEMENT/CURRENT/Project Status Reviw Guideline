@@ -1,0 +1,110 @@
+# MID-DEVELOPMENT PROJECT - Analysis Checklist
+
+**Use this when a project is stuck or needs direction. Discuss with AI and document findings.**
+
+---
+
+## 📍 CURRENT STATUS
+
+**Assessment Questions:**
+- [ ] What exactly works right now?
+- [ ] What are the current blocking issues?
+- [ ] What was the last working version?
+- [ ] How far are we from the original goal?
+
+**Current State:**
+```
+Working Features:
+- [List what works]
+
+Blocking Issues:
+- [List current problems]
+
+Last Working Version:
+- [Git commit/tag or description]
+
+Distance from Goal:
+- [Estimate: Close/Medium/Far/Off-track]
+```
+
+---
+
+## 🔍 PROBLEM ANALYSIS
+
+**Diagnostic Questions:**
+- [ ] What's the ONE biggest obstacle?
+- [ ] Is the current approach the right one?
+- [ ] What would we do differently if starting fresh?
+- [ ] Are we solving the right problem?
+
+**Analysis Results:**
+```
+Biggest Obstacle:
+- [Primary blocking issue]
+
+Approach Assessment:
+- [Current approach: Right/Wrong/Needs adjustment]
+
+Fresh Start Approach:
+- [What would you do differently]
+
+Problem Validation:
+- [Are we solving the right problem: Yes/No/Unsure]
+```
+
+---
+
+## 🎯 PATH FORWARD
+
+**Strategic Questions:**
+- [ ] What are our options? (continue/pivot/restart/abandon)
+- [ ] What's the minimum change to get something working?
+- [ ] What's the risk of each approach?
+- [ ] What's the time limit for this phase?
+
+**Strategic Options:**
+```
+Option 1: Continue Current Approach
+- Pros: [List]
+- Cons: [List]
+- Time estimate: [Duration]
+
+Option 2: Pivot Approach
+- What to change: [Description]
+- Risk level: [Low/Medium/High]
+- Time estimate: [Duration]
+
+Option 3: Restart/Abandon
+- Rationale: [Why consider this]
+- Decision criteria: [What would trigger this]
+```
+
+---
+
+## 🏷️ DECISION POINT
+
+**Final Decisions:**
+- [ ] **Chosen Strategy:** [Continue/Pivot/Restart/Abandon]
+- [ ] **Development Approach:** [Linear/AI Team/Combined]
+- [ ] **Next Milestone:** [Clear, measurable goal]
+- [ ] **Time Limit:** [Maximum time for next phase]
+- [ ] **Success Criteria:** [How to measure progress]
+
+---
+
+## ✅ ACTION PLAN
+
+**Immediate Next Steps:**
+1. [ ] [First action item]
+2. [ ] [Second action item]
+3. [ ] [Third action item]
+
+**Checkpoint Schedule:**
+- [ ] Next review date: [Date]
+- [ ] Success metrics to check: [List]
+
+---
+
+**Date Analyzed:** [Add date]  
+**Last Updated:** [Add date]  
+**Project Phase:** [Planning/Development/Debugging/Refactoring]

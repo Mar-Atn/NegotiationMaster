@@ -1,0 +1,37 @@
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+
+# Type should be one of the following:
+# * feat: A new feature
+# * fix: A bug fix
+# * docs: Documentation only changes
+# * style: Changes that do not affect the meaning of the code
+# * refactor: A code change that neither fixes a bug nor adds a feature
+# * perf: A code change that improves performance
+# * test: Adding missing tests or correcting existing tests
+# * chore: Changes to the build process or auxiliary tools
+
+# Scope should be one of the following:
+# * auth: Authentication system
+# * socket: Real-time functionality  
+# * api: Backend API endpoints
+# * ui: Frontend components
+# * db: Database operations
+# * config: Configuration changes
+
+# Subject line should:
+# * Use imperative mood ("add" not "added" or "adds")
+# * Be 50 characters or less
+# * Not end with a period
+
+# Body should:
+# * Wrap at 72 characters
+# * Explain what and why, not how
+# * Use imperative mood
+
+# Footer should contain:
+# * Breaking changes (BREAKING CHANGE: description)
+# * Issue references (Closes #123, Fixes #456)

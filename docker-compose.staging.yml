@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+  # Staging environment with full monitoring
+  postgres:
+    image: postgres:15-alpine
+    container_name: negotiation-postgres-staging
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-negotiation_staging}
+      POSTGRES_USER: ${POSTGRES_USER:-negotiation_staging}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+      - ./database/backups:/backups
+    ports:
+      - "5434:5432"
+    networks:
+      - negotiation-staging-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-negotiation_staging}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: negotiation-redis-staging
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_staging_data:/data
+    ports:
+      - "6381:6379"
+    networks:
+      - negotiation-staging-network
+
+  backend:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${GITHUB_REPOSITORY:-negotiation-master}/backend:staging
+    container_name: negotiation-backend-staging
+    restart: unless-stopped
+    environment:
+      NODE_ENV: staging
+      PORT: 5000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-negotiation_staging}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-negotiation_staging}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      RATE_LIMIT_WINDOW_MS: 300000
+      RATE_LIMIT_MAX_REQUESTS: 200
+    volumes:
+      - backend_staging_uploads:/app/uploads
+      - backend_staging_logs:/app/logs
+    ports:
+      - "5002:5000"
+    networks:
+      - negotiation-staging-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  frontend:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${GITHUB_REPOSITORY:-negotiation-master}/frontend:staging
+    container_name: negotiation-frontend-staging
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    networks:
+      - negotiation-staging-network
+    depends_on:
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # Monitoring stack for staging
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: negotiation-prometheus-staging
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_staging_data:/prometheus
+    ports:
+      - "9091:9090"
+    networks:
+      - negotiation-staging-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: negotiation-grafana-staging
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-staging_admin}
+    volumes:
+      - grafana_staging_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3001:3000"
+    networks:
+      - negotiation-staging-network
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_staging_data:
+    driver: local
+  redis_staging_data:
+    driver: local
+  backend_staging_uploads:
+    driver: local
+  backend_staging_logs:
+    driver: local
+  prometheus_staging_data:
+    driver: local
+  grafana_staging_data:
+    driver: local
+
+networks:
+  negotiation-staging-network:
+    driver: bridge

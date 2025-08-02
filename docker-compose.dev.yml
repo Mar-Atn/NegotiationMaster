@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # Development PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: negotiation-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: negotiation_dev
+      POSTGRES_USER: negotiation_dev
+      POSTGRES_PASSWORD: dev_password
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - negotiation-dev-network
+
+  # Development Redis
+  redis:
+    image: redis:7-alpine
+    container_name: negotiation-redis-dev
+    restart: unless-stopped
+    command: redis-server
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - negotiation-dev-network
+
+  # Backend Development with Hot Reload
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: negotiation-backend-dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      DATABASE_URL: postgresql://negotiation_dev:dev_password@postgres:5432/negotiation_dev
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-jwt-secret-key
+      JWT_REFRESH_SECRET: dev-refresh-secret-key
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend_dev_uploads:/app/uploads
+      - backend_dev_logs:/app/logs
+    ports:
+      - "5001:5000"
+    networks:
+      - negotiation-dev-network
+    depends_on:
+      - postgres
+      - redis
+    command: npm run dev
+
+  # Frontend Development with Hot Reload
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: negotiation-frontend-dev
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: http://localhost:5001
+      REACT_APP_WS_URL: ws://localhost:5001
+      CHOKIDAR_USEPOLLING: true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3001:3000"
+    networks:
+      - negotiation-dev-network
+    depends_on:
+      - backend
+    command: npm start
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  backend_dev_uploads:
+    driver: local
+  backend_dev_logs:
+    driver: local
+
+networks:
+  negotiation-dev-network:
+    driver: bridge
