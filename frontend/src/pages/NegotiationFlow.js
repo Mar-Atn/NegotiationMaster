@@ -31,6 +31,7 @@ const NegotiationFlow = () => {
   const [negotiationId, setNegotiationId] = useState(null)
   const [assessmentLoading, setAssessmentLoading] = useState(false)
   const [assessmentError, setAssessmentError] = useState(null)
+  const [assessmentData, setAssessmentData] = useState(null)
 
   // Navigation guard for assessment phase
   useEffect(() => {
@@ -182,6 +183,7 @@ const NegotiationFlow = () => {
     setConversationData(null)
     setAssessmentError(null)
     setAssessmentLoading(false)
+    setAssessmentData(null)
   }
 
   const handleContinueTraining = () => {
@@ -195,8 +197,9 @@ const NegotiationFlow = () => {
   }
 
   // Assessment phase handlers
-  const handleAssessmentComplete = (assessmentData) => {
-    console.log('✅ Assessment completed successfully:', assessmentData)
+  const handleAssessmentComplete = (assessmentResult) => {
+    console.log('✅ Assessment completed successfully:', assessmentResult)
+    setAssessmentData(assessmentResult)
     setAssessmentLoading(false)
     setAssessmentError(null)
     setCurrentPhase('feedback')
@@ -314,6 +317,7 @@ const NegotiationFlow = () => {
             scenario={scenario}
             character={character}
             conversationData={conversationData}
+            assessmentData={assessmentData}
             assessmentLoading={assessmentLoading}
             assessmentError={assessmentError}
             onBackToDashboard={handleBackToDashboard}
