@@ -1989,6 +1989,62 @@ PSYCHOLOGICAL PROFILE (Big Five Traits):
   }
 
   /**
+   * Fetch conversation transcript from ElevenLabs API
+   */
+  async fetchConversationTranscript(conversationId) {
+    if (!this.apiKey) {
+      throw new Error('ElevenLabs API key not configured')
+    }
+
+    try {
+      logger.info('Fetching conversation transcript from ElevenLabs', { conversationId })
+
+      const axios = require('axios')
+      const url = `https://api.elevenlabs.io/v1/convai/conversations/${conversationId}`
+      const headers = {
+        'xi-api-key': this.apiKey,
+        'Content-Type': 'application/json'
+      }
+
+      const response = await axios.get(url, { headers })
+      const conversationData = response.data
+
+      logger.info('Successfully fetched conversation data', {
+        conversationId,
+        status: conversationData.status,
+        transcriptMessages: conversationData.transcript?.length || 0
+      })
+
+      return {
+        conversationId,
+        status: conversationData.status,
+        transcript: conversationData.transcript || [],
+        metadata: {
+          fetchedAt: new Date().toISOString(),
+          source: 'elevenlabs',
+          messageCount: conversationData.transcript?.length || 0
+        }
+      }
+
+    } catch (error) {
+      logger.error('Error fetching conversation transcript', {
+        conversationId,
+        error: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText
+      })
+
+      if (error.response?.status === 404) {
+        throw new Error(`Conversation not found: ${conversationId}`)
+      } else if (error.response?.status === 401) {
+        throw new Error('Invalid ElevenLabs API key')
+      } else {
+        throw new Error(`Failed to fetch transcript: ${error.message}`)
+      }
+    }
+  }
+
+  /**
    * Cleanup resources
    */
   async cleanup() {

@@ -19,6 +19,7 @@ import NegotiationChat from './pages/NegotiationChat'
 import NegotiationFlow from './pages/NegotiationFlow'
 import VoiceTest from './pages/VoiceTest'
 import AcademicPrototype from './pages/AcademicPrototype'
+import TranscriptTest from './pages/TranscriptTest'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/voice-test" element={<VoiceTest />} />
               <Route path="/academic-prototype" element={<AcademicPrototype />} />
+              <Route path="/transcript-test" element={<TranscriptTest />} />
               <Route 
                 path="/dashboard" 
                 element={

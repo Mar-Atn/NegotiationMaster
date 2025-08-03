@@ -684,6 +684,42 @@ class VoiceController {
   }
 
   /**
+   * Get conversation transcript from ElevenLabs
+   */
+  async getConversationTranscript(req, res, next) {
+    try {
+      const { conversationId } = req.params
+
+      if (!conversationId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Conversation ID is required',
+          code: 'MISSING_PARAMETERS'
+        })
+      }
+
+      // Fetch transcript from ElevenLabs API
+      const transcriptData = await voiceService.fetchConversationTranscript(conversationId)
+
+      logger.info('Conversation transcript fetched', {
+        conversationId,
+        messageCount: transcriptData.transcript?.length || 0,
+        status: transcriptData.status,
+        userId: req.user?.userId
+      })
+
+      res.json({
+        success: true,
+        data: transcriptData
+      })
+
+    } catch (error) {
+      logger.error('Failed to fetch conversation transcript:', error)
+      next(error)
+    }
+  }
+
+  /**
    * Batch generate speech for multiple messages
    */
   async batchGenerateSpeech(req, res, next) {

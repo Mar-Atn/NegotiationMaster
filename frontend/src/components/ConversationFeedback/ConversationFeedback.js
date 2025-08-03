@@ -1,422 +1,238 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Card,
   CardContent,
   Typography,
-  LinearProgress,
   Button,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
   CircularProgress,
-  Alert
+  Alert,
+  Stack,
+  Chip
 } from '@mui/material'
-import { RestartAlt, Home, Visibility, VisibilityOff } from '@mui/icons-material'
-import axios from 'axios'
+import { RestartAlt, Home, Description } from '@mui/icons-material'
 
 const ConversationFeedback = ({ 
   negotiationId,
   scenario,
   character,
   conversationData,
-  assessmentLoading = false,
-  assessmentError = null,
   onRestartScenario, 
-  onBackToDashboard,
-  onContinueTraining,
-  onPracticeAgain
+  onBackToDashboard
 }) => {
-  const [feedbackData, setFeedbackData] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [transcript, setTranscript] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [showFullTranscript, setShowFullTranscript] = useState(false)
-  const [showTranscript, setShowTranscript] = useState(false)
+  const [retryAttempt, setRetryAttempt] = useState(0)
 
-  const fetchFeedbackData = useCallback(async () => {
+  // Get ElevenLabs conversation ID from conversationData
+  const elevenLabsId = conversationData?.elevenLabsConversationId
+
+  const fetchTranscript = async (retryCount = 0) => {
+    if (!elevenLabsId) {
+      setError('No ElevenLabs conversation ID found')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    if (retryCount === 0) setRetryAttempt(0)
+
     try {
-      setLoading(true)
-      setError(null)
-
-      if (!negotiationId) {
-        console.warn('⚠️ No negotiationId provided, using mock data')
-        setFeedbackData(null)
-        setLoading(false)
-        return
-      }
-
-      console.log('📊 Fetching assessment results for:', negotiationId)
-
-      // Try to fetch assessment results
-      let response
-      try {
-        // First try the assessment results endpoint
-        response = await axios.get(`/api/assessment/${negotiationId}/results`)
-      } catch (proxyError) {
-        console.log('🔄 Assessment results not found, trying demo endpoint...')
-        try {
-          response = await axios.get(`/api/assessment/demo/feedback/${negotiationId}`)
-        } catch (demoError) {
-          // Fallback to direct backend connection
-          if (demoError.code === 'ERR_NETWORK') {
-            console.log('🔄 Proxy failed, trying direct backend connection...')
-            response = await axios.get(`http://localhost:5000/api/assessment/${negotiationId}/results`)
-          } else {
-            throw demoError
-          }
-        }
-      }
+      console.log(`🎵 Fetching transcript for conversation ID: ${elevenLabsId} (attempt ${retryCount + 1})`)
       
-      if (response.data.success) {
-        setFeedbackData(response.data.data)
-        console.log('✅ Assessment feedback data loaded successfully:', response.data.data)
+      const url = `/api/voice/transcript/${elevenLabsId}`
+      const response = await fetch(url)
+      const data = await response.json()
+      
+      if (data.success) {
+        const { status, transcript } = data.data
+        console.log(`📊 Conversation status: ${status}, Messages: ${transcript?.length || 0}`)
+        
+        // If still processing, retry after delay - ElevenLabs can take 2-3 minutes for longer conversations
+        if (status === 'processing' && transcript.length === 0 && retryCount < 40) {
+          const waitTime = retryCount < 10 ? 5000 : 10000  // 5s for first 10 tries, then 10s
+          const totalWaitTime = Math.round((retryCount * 5 + (retryCount > 10 ? (retryCount - 10) * 5 : 0)) / 60 * 10) / 10
+          console.log(`⏳ Conversation still processing, retrying in ${waitTime/1000}s... (${retryCount + 1}/40, ${totalWaitTime}min elapsed)`)
+          setRetryAttempt(retryCount + 1)
+          setTimeout(() => {
+            fetchTranscript(retryCount + 1)
+          }, waitTime)
+          return
+        }
+        
+        // If done or has messages, display the transcript
+        if (status === 'done' || transcript.length > 0) {
+          setTranscript(data.data)
+          setLoading(false)
+          console.log('✅ Transcript loaded successfully:', {
+            status,
+            messageCount: transcript.length
+          })
+        } else {
+          // Max retries reached or other status
+          setError(`Conversation status: ${status}. Transcript may not be ready yet.`)
+          setLoading(false)
+        }
       } else {
-        console.warn('⚠️ Assessment data not available, using mock data')
-        setFeedbackData(null)
+        console.error('❌ API returned error:', data.error)
+        setError(data.error || 'Failed to fetch transcript')
+        setLoading(false)
       }
     } catch (err) {
-      console.error('Failed to fetch assessment feedback:', err)
-      console.log('🔄 Using mock feedback data for demo purposes')
-      setFeedbackData(null)
-    } finally {
+      console.error('❌ Network/fetch error:', err)
+      setError('Network error: ' + err.message)
       setLoading(false)
     }
-  }, [negotiationId])
+  }
 
+  // Auto-fetch transcript when conversation ends
   useEffect(() => {
-    if (negotiationId) {
-      fetchFeedbackData()
+    console.log('🔄 ConversationFeedback useEffect triggered:', {
+      elevenLabsId,
+      conversationData,
+      hasElevenLabsId: !!elevenLabsId
+    })
+    
+    if (elevenLabsId) {
+      console.log('🎯 ConversationFeedback received ElevenLabs ID:', elevenLabsId)
+      // Immediately show loading state to inform user
+      setLoading(true)
+      setError(null)
+      setRetryAttempt(0)
+      // Small delay to ensure UI updates, then start fetching
+      setTimeout(() => {
+        fetchTranscript()
+      }, 100)
     } else {
-      // Use mock data for demonstration
-      setFeedbackData(null)
-      setLoading(false)
+      console.warn('⚠️ No ElevenLabs ID provided to ConversationFeedback')
     }
-  }, [negotiationId, fetchFeedbackData])
-
-  // Mock data matching PRD requirements  
-  const mockFeedbackData = {
-    overallScore: 78,
-    skills: {
-      claimingValue: 82,
-      creatingValue: 71,
-      relationshipManagement: 85
-    },
-    summary: `Your negotiation demonstrates strong capabilities with effective application of multiple techniques. You showed particular strength in relationship management by maintaining a collaborative tone throughout the conversation. For improvement, consider exploring the full range of possible agreements before accepting offers - this can help you discover additional value. Your use of empathetic language like "I understand your position" helped build trust and kept the negotiation constructive. Next time, try asking more probing questions about underlying interests to uncover creative solutions that benefit both parties.`
-  }
-
-  // Mock conversation transcript
-  const mockTranscript = [
-    { speaker: 'You', message: 'I\'d like to discuss the pricing structure for this contract.' },
-    { speaker: character?.name || 'AI', message: 'I understand your position. Let\'s explore alternatives that work for both of us.' },
-    { speaker: 'You', message: 'What flexibility do you have on the timeline?' },
-    { speaker: character?.name || 'AI', message: 'We could consider a phased approach that meets your budget constraints.' },
-    { speaker: 'You', message: 'That sounds interesting. Can we discuss the specifics?' },
-    { speaker: character?.name || 'AI', message: 'Certainly. Let me outline what we could do...' }
-  ]
-
-  const getScoreColor = (score) => {
-    if (score >= 80) return 'success'
-    if (score >= 60) return 'warning'
-    return 'error'
-  }
-
-  const getPerformanceLevel = (score) => {
-    if (score >= 80) return 'Good Performance'
-    if (score >= 60) return 'Average Performance'
-    return 'Needs Improvement'
-  }
-
-  if (loading || assessmentLoading) {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: 400, gap: 2 }}>
-        <CircularProgress size={60} />
-        <Typography variant="body1" color="text.secondary">
-          {assessmentLoading ? 'Analyzing your negotiation performance...' : 'Loading feedback data...'}
-        </Typography>
-      </Box>
-    )
-  }
-
-  if (error || assessmentError) {
-    return (
-      <Alert severity="warning" sx={{ m: 2 }}>
-        {assessmentError || error || 'Assessment data temporarily unavailable'}
-        <Typography variant="body2" sx={{ mt: 1 }}>
-          Using demo data for this session. Your conversation was recorded and can be reviewed later.
-        </Typography>
-        <Button onClick={fetchFeedbackData} sx={{ ml: 2 }}>
-          Retry
-        </Button>
-      </Alert>
-    )
-  }
-
-  // Debug: Log conversation data to check transcript availability
-  console.log('📊 ConversationFeedback received conversationData:', conversationData)
-  console.log('📝 Transcript data:', conversationData?.transcript)
-
-  // Use backend data if available, otherwise use mock data
-  const data = feedbackData || mockFeedbackData
-  const transcript = conversationData?.transcript || mockTranscript
-
-  // Extract scores from various possible data structures
-  const overallScore = data.scores?.overall || data.overallScore || mockFeedbackData.overallScore
-  const skills = data.scores || data.skills || mockFeedbackData.skills
+  }, [elevenLabsId])
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-      {/* Header */}
-      <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
-        Negotiation Complete
-      </Typography>
-      
-      <Typography variant="h6" color="text.secondary" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
-        {scenario?.title || 'Practice Scenario'}
-      </Typography>
-
-      {/* Assessment Status */}
-      {negotiationId && (
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Typography variant="body2" color="text.secondary">
-            Session ID: {negotiationId.slice(-12)}
-          </Typography>
-          {!feedbackData && !assessmentError && (
-            <Typography variant="caption" color="primary.main" sx={{ fontStyle: 'italic' }}>
-              Real-time assessment data will be available shortly
-            </Typography>
-          )}
-        </Box>
-      )}
-
-      {/* Overall Performance */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Overall Negotiation Score: {overallScore}%
-          </Typography>
-          <LinearProgress
-            variant="determinate"
-            value={overallScore}
-            color={getScoreColor(overallScore)}
-            sx={{ height: 12, borderRadius: 6, mb: 1 }}
-          />
-          <Typography variant="body2" color="text.secondary">
-            {getPerformanceLevel(overallScore)}
-          </Typography>
-        </CardContent>
-      </Card>
-
-      {/* 3-Dimensional Skill Breakdown */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Skill Breakdown
-          </Typography>
-          
-          {/* Claiming Value */}
-          <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2">Claiming Value</Typography>
-              <Typography variant="body2" fontWeight="bold">
-                {skills.claimingValue || skills.claiming_value || 0}%
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={skills.claimingValue || skills.claiming_value || 0}
-              color={getScoreColor(skills.claimingValue || skills.claiming_value || 0)}
-              sx={{ height: 8, borderRadius: 4 }}
-            />
-          </Box>
-
-          {/* Creating Value */}
-          <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2">Creating Value</Typography>
-              <Typography variant="body2" fontWeight="bold">
-                {skills.creatingValue || skills.creating_value || 0}%
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={skills.creatingValue || skills.creating_value || 0}
-              color={getScoreColor(skills.creatingValue || skills.creating_value || 0)}
-              sx={{ height: 8, borderRadius: 4 }}
-            />
-          </Box>
-
-          {/* Relationship Management */}
-          <Box sx={{ mb: 0 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2">Relationship Management</Typography>
-              <Typography variant="body2" fontWeight="bold">
-                {skills.relationshipManagement || skills.relationship_management || 0}%
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={skills.relationshipManagement || skills.relationship_management || 0}
-              color={getScoreColor(skills.relationshipManagement || skills.relationship_management || 0)}
-              sx={{ height: 8, borderRadius: 4 }}
-            />
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* View Transcript Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-        <Button
-          variant="outlined"
-          startIcon={showTranscript ? <VisibilityOff /> : <Visibility />}
-          onClick={() => setShowTranscript(!showTranscript)}
-          sx={{ minWidth: 200 }}
-        >
-          {showTranscript ? 'Hide Transcript' : 'View Full Transcript'}
-        </Button>
-      </Box>
-
-      {/* Conversation Transcript (Collapsible) */}
-      {showTranscript && (
-        <Card sx={{ mb: 3 }}>
+    <Box sx={{ maxWidth: 1000, mx: 'auto', p: 3 }}>
+      <Stack spacing={3}>
+        {/* Header */}
+        <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Conversation Transcript
+            <Typography variant="h4" gutterBottom>
+              Conversation Complete
             </Typography>
-            <Paper sx={{ maxHeight: 300, overflow: 'auto', p: 2, bgcolor: 'grey.50' }}>
-              <List dense>
-                {transcript.map((item, index) => (
-                  <ListItem key={index} sx={{ py: 0.5 }}>
-                    <ListItemText
-                      primary={`${item.speaker}: ${item.message || item.text}`}
-                      primaryTypographyProps={{ variant: 'body2' }}
-                    />
-                  </ListItem>
+            <Typography variant="body1" color="text.secondary">
+              Scenario: {scenario?.title || 'Unknown'} • Character: {character?.name || 'Unknown'}
+            </Typography>
+            {elevenLabsId && (
+              <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+                Conversation ID: {elevenLabsId}
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Transcript Section */}
+        <Card>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Description />
+              <Typography variant="h5">Conversation Transcript</Typography>
+              {!loading && transcript && (
+                <Chip 
+                  label={`${transcript.transcript?.length || 0} messages`} 
+                  color="primary" 
+                  size="small" 
+                />
+              )}
+            </Box>
+
+            {elevenLabsId && !transcript && !loading && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Your conversation transcript is being processed by ElevenLabs. This may take a few moments.
+              </Alert>
+            )}
+
+            {loading && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
+                <CircularProgress />
+                <Typography sx={{ mt: 2, textAlign: 'center' }}>
+                  {transcript?.status === 'processing' 
+                    ? (
+                      <>
+                        🔄 ElevenLabs is processing your conversation...<br />
+                        <small>This can take 2-3 minutes for longer conversations.</small>
+                        {retryAttempt > 0 && (
+                          <><br /><small>Checking progress... (attempt {retryAttempt}/40)</small></>
+                        )}
+                      </>
+                    )
+                    : (
+                      <>
+                        📝 Preparing your conversation transcript...<br />
+                        <small>Please wait while we fetch your conversation from ElevenLabs.</small>
+                      </>
+                    )
+                  }
+                </Typography>
+              </Box>
+            )}
+
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+                <Button onClick={fetchTranscript} sx={{ ml: 2 }}>
+                  Retry
+                </Button>
+              </Alert>
+            )}
+
+            {transcript && transcript.transcript && (
+              <Stack spacing={2} sx={{ mt: 2 }}>
+                {transcript.transcript.map((message, index) => (
+                  <Card 
+                    key={index}
+                    sx={{ 
+                      backgroundColor: message.role === 'user' ? '#e3f2fd' : '#f5f5f5',
+                      border: `1px solid ${message.role === 'user' ? '#2196f3' : '#9e9e9e'}`
+                    }}
+                  >
+                    <CardContent sx={{ py: 2 }}>
+                      <Typography variant="subtitle2" color="primary" gutterBottom>
+                        {message.role === 'user' ? 'You' : character?.name || 'AI Agent'}
+                      </Typography>
+                      <Typography variant="body1">
+                        {message.message}
+                      </Typography>
+                    </CardContent>
+                  </Card>
                 ))}
-              </List>
-            </Paper>
+              </Stack>
+            )}
+
+            {!elevenLabsId && (
+              <Alert severity="warning">
+                No ElevenLabs conversation ID available for transcript retrieval.
+              </Alert>
+            )}
           </CardContent>
         </Card>
-      )}
 
-      {/* Teaching Notes - Key Learning Outcomes */}
-      {scenario?.teaching_notes && (
-        <Card sx={{ mb: 3, border: '2px solid', borderColor: 'primary.light', backgroundColor: 'primary.50' }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
-              Key Learning Outcomes
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Scenario-specific concepts and complexity level
-            </Typography>
-            
-            {/* Parse teaching notes if it's a JSON string */}
-            {(() => {
-              let teachingNotes = scenario.teaching_notes
-              if (typeof teachingNotes === 'string') {
-                try {
-                  teachingNotes = JSON.parse(teachingNotes)
-                } catch (e) {
-                  // If not JSON, treat as plain text
-                  return (
-                    <Typography variant="body2" sx={{ lineHeight: 1.6, mt: 1 }}>
-                      {teachingNotes}
-                    </Typography>
-                  )
-                }
-              }
-              
-              return (
-                <Box sx={{ mt: 2 }}>
-                  {teachingNotes.key_concepts && (
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-                        Key Concepts Covered:
-                      </Typography>
-                      <List dense>
-                        {teachingNotes.key_concepts.map((concept, index) => (
-                          <ListItem key={index} sx={{ py: 0.25, px: 0 }}>
-                            <ListItemText
-                              primary={`• ${concept}`}
-                              primaryTypographyProps={{ variant: 'body2' }}
-                            />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </Box>
-                  )}
-                  
-                  {teachingNotes.learning_outcomes && (
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-                        Learning Outcomes:
-                      </Typography>
-                      <List dense>
-                        {teachingNotes.learning_outcomes.map((outcome, index) => (
-                          <ListItem key={index} sx={{ py: 0.25, px: 0 }}>
-                            <ListItemText
-                              primary={`• ${outcome}`}
-                              primaryTypographyProps={{ variant: 'body2' }}
-                            />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </Box>
-                  )}
-                  
-                  {teachingNotes.complexity_level && (
-                    <Box>
-                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-                        Complexity Level:
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
-                        {teachingNotes.complexity_level}
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              )
-            })()}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Personal Feedback */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Personal Feedback
-          </Typography>
-          <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-            {data.summary || `Your negotiation demonstrates strong capabilities with effective application of multiple techniques. 
-            You showed particular strength in relationship management by maintaining a collaborative tone throughout the conversation. 
-            For improvement, consider exploring the full range of possible agreements before accepting offers - this can help you 
-            discover additional value. Your use of empathetic language like "I understand your position" helped build trust and 
-            kept the negotiation constructive. Next time, try asking more probing questions about underlying interests to uncover 
-            creative solutions that benefit both parties.`}
-          </Typography>
-        </CardContent>
-      </Card>
-
-      {/* Action Buttons */}
-      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-        <Button
-          variant="contained"
-          startIcon={<RestartAlt />}
-          onClick={onRestartScenario || onPracticeAgain}
-          sx={{ minWidth: 180 }}
-        >
-          Restart Scenario
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<Home />}
-          onClick={onBackToDashboard || onContinueTraining}
-          sx={{ minWidth: 180 }}
-        >
-          Back to Dashboard
-        </Button>
-      </Box>
+        {/* Action Buttons */}
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+          <Button
+            variant="outlined"
+            startIcon={<RestartAlt />}
+            onClick={onRestartScenario}
+          >
+            Practice Again
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Home />}
+            onClick={onBackToDashboard}
+          >
+            Back to Dashboard
+          </Button>
+        </Box>
+      </Stack>
     </Box>
   )
 }

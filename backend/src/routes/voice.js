@@ -11,7 +11,7 @@ const publicRoutes = ['/create-agent-session']
 
 // Apply authentication to authenticated routes only
 router.use((req, res, next) => {
-  if (publicRoutes.includes(req.path)) {
+  if (publicRoutes.includes(req.path) || req.path.startsWith('/transcript/')) {
     return next()
   }
   return authenticateToken(req, res, next)
@@ -202,6 +202,19 @@ router.get('/conversational/:sessionId/history',
   ],
   handleValidationErrors,
   voiceController.getConversationHistory
+)
+
+/**
+ * @route GET /api/voice/transcript/:conversationId
+ * @desc Get transcript from ElevenLabs conversation
+ * @access Private
+ */
+router.get('/transcript/:conversationId',
+  [
+    param('conversationId').isString().withMessage('Valid conversation ID is required')
+  ],
+  handleValidationErrors,
+  voiceController.getConversationTranscript
 )
 
 /**

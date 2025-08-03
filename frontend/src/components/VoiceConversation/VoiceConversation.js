@@ -62,6 +62,7 @@ const VoiceConversation = ({
   const [currentUserTranscript, setCurrentUserTranscript] = useState('')
   const [conversationHistory, setConversationHistory] = useState([])
   const [sessionId, setSessionId] = useState(null)
+  const [elevenLabsConversationId, setElevenLabsConversationId] = useState(null)
   const [sessionState, setSessionState] = useState('idle') // idle, initializing, ready, listening, speaking, processing, error
   
   // Speech recognition
@@ -205,6 +206,11 @@ const VoiceConversation = ({
       setConnectionStatus('disconnected')
       setSessionState('idle')
       setIsActive(false)
+      
+      // Log the conversation ID for transcript fetching
+      if (elevenLabsConversationId) {
+        console.log('📝 Conversation finalized, ID available for transcript:', elevenLabsConversationId)
+      }
     }
   })
 
@@ -416,7 +422,14 @@ const VoiceConversation = ({
         promptLength: sessionConfig.overrides?.agent?.prompt?.prompt?.length
       })
       
-      await conversation.startSession(sessionConfig)
+      // Start session and capture the conversation ID
+      const conversationId = await conversation.startSession(sessionConfig)
+      
+      // Store the ElevenLabs conversation ID for transcript retrieval
+      if (conversationId) {
+        setElevenLabsConversationId(conversationId)
+        console.log('🎯 ElevenLabs Conversation ID captured:', conversationId)
+      }
       
       setIsActive(true)
       setIsStarting(false)
@@ -805,7 +818,8 @@ const VoiceConversation = ({
       console.log('🔍 Conversation end debug:', {
         transcriptLength: transcript.length,
         conversationHistoryLength: conversationHistory.length,
-        elevenLabsId: conversation?.id || conversation?.conversationId || sessionId,
+        capturedElevenLabsId: elevenLabsConversationId,
+        fallbackElevenLabsId: conversation?.id || conversation?.conversationId || sessionId,
         conversationTime,
         hasConversation: !!conversation
       })
@@ -839,7 +853,7 @@ const VoiceConversation = ({
       // Prepare conversation data for assessment
       const conversationResults = {
         negotiationId: negotiationId || `negotiation-${Date.now()}`,
-        elevenLabsConversationId: conversation?.id || conversation?.conversationId || sessionId,
+        elevenLabsConversationId: elevenLabsConversationId || conversation?.id || conversation?.conversationId || sessionId,
         transcript: finalTranscript,
         conversationHistory: conversationHistory.length > 0 ? conversationHistory : [
           { speaker: 'System', text: `Voice conversation with ${character?.name || 'AI Character'}` }

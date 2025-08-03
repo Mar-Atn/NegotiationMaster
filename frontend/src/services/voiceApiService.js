@@ -563,6 +563,34 @@ class VoiceApiService {
   }
 
   /**
+   * Get conversation transcript from ElevenLabs
+   */
+  async getConversationTranscript(conversationId) {
+    try {
+      console.log(`🎵 Fetching transcript for conversation: ${conversationId}`)
+      
+      const startTime = Date.now()
+      const response = await apiClient.get(`/voice/transcript/${conversationId}`)
+      const latency = Date.now() - startTime
+      
+      this.updateMetrics(latency, true)
+      
+      console.log('✅ Conversation transcript fetched successfully', {
+        conversationId,
+        messageCount: response.data?.transcript?.length || 0,
+        latency
+      })
+      
+      return response
+      
+    } catch (error) {
+      this.updateMetrics(0, false)
+      console.error('❌ Failed to fetch conversation transcript:', error)
+      throw new Error(error.response?.data?.error || 'Failed to fetch transcript')
+    }
+  }
+
+  /**
    * Cleanup resources
    */
   cleanup() {

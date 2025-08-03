@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transcript Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .transcript { border: 1px solid #ddd; padding: 15px; margin: 10px 0; }
+        .user { background-color: #e3f2fd; }
+        .agent { background-color: #f5f5f5; }
+        .role { font-weight: bold; margin-bottom: 5px; }
+        button { padding: 10px 20px; font-size: 16px; margin: 10px 0; }
+        #loading { display: none; }
+        #error { color: red; display: none; }
+    </style>
+</head>
+<body>
+    <h1>ElevenLabs Transcript Display</h1>
+    <p>Conversation ID: <strong>conv_6401k1phxhyzfz2va165272pmakz</strong></p>
+    
+    <button onclick="fetchTranscript()">Fetch Transcript</button>
+    
+    <div id="loading">Loading...</div>
+    <div id="error"></div>
+    <div id="transcript-container"></div>
+
+    <script>
+        async function fetchTranscript() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const container = document.getElementById('transcript-container');
+            
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            container.innerHTML = '';
+            
+            try {
+                const response = await fetch('http://localhost:5001/api/voice/transcript/conv_6401k1phxhyzfz2va165272pmakz');
+                const data = await response.json();
+                
+                loading.style.display = 'none';
+                
+                if (data.success) {
+                    displayTranscript(data.data);
+                } else {
+                    showError('Failed to fetch transcript: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                loading.style.display = 'none';
+                showError('Network error: ' + err.message);
+            }
+        }
+        
+        function displayTranscript(transcriptData) {
+            const container = document.getElementById('transcript-container');
+            
+            // Display metadata
+            const metadata = document.createElement('div');
+            metadata.innerHTML = `
+                <h3>Conversation Details</h3>
+                <p><strong>Status:</strong> ${transcriptData.status}</p>
+                <p><strong>Messages:</strong> ${transcriptData.transcript.length}</p>
+                <p><strong>Fetched:</strong> ${transcriptData.metadata.fetchedAt}</p>
+                <hr>
+            `;
+            container.appendChild(metadata);
+            
+            // Display transcript
+            const title = document.createElement('h3');
+            title.textContent = 'Conversation Transcript';
+            container.appendChild(title);
+            
+            transcriptData.transcript.forEach((message, index) => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `transcript ${message.role}`;
+                
+                const roleDiv = document.createElement('div');
+                roleDiv.className = 'role';
+                roleDiv.textContent = `${index + 1}. ${message.role === 'user' ? 'YOU' : 'AI AGENT'}:`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.textContent = message.message;
+                
+                messageDiv.appendChild(roleDiv);
+                messageDiv.appendChild(contentDiv);
+                container.appendChild(messageDiv);
+            });
+        }
+        
+        function showError(msg) {
+            const error = document.getElementById('error');
+            error.textContent = msg;
+            error.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
