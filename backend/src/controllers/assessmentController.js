@@ -938,7 +938,8 @@ class AssessmentController {
           data: testConversationData
         }
         
-        await processor.processConversationAnalysis(job)
+        const result = await processor.processConversationAnalysis(job)
+        console.log('🔍 Assessment processor result:', result)
         
         // Fetch the generated assessment from database
         const assessment = await db('conversation_assessments')
@@ -946,9 +947,16 @@ class AssessmentController {
           .orderBy('created_at', 'desc')
           .first()
         
-        if (assessment && assessment.ai_feedback) {
+        console.log('🔍 Database assessment record:', {
+          id: assessment?.id,
+          status: assessment?.status,
+          hasFeedback: !!assessment?.personalized_feedback,
+          feedbackLength: assessment?.personalized_feedback?.length
+        })
+        
+        if (assessment && assessment.personalized_feedback) {
           console.log('✅ Real AI feedback generated successfully!')
-          const feedbackData = JSON.parse(assessment.ai_feedback)
+          const feedbackData = JSON.parse(assessment.personalized_feedback)
           return res.json({
             success: true,
             data: {
@@ -962,6 +970,7 @@ class AssessmentController {
         }
       } catch (aiError) {
         console.warn('⚠️ AI feedback generation failed, using fallback:', aiError.message)
+        console.error('🔍 Full AI error stack:', aiError)
       }
 
       // Fallback to mock data if AI fails

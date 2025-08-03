@@ -54,8 +54,8 @@ class AssessmentProcessor {
       // Get scenario context for assessment
       const scenario = await db('scenarios').where('id', scenarioId).first()
       
-      // Use enhanced assessment engine with sophisticated conversation analysis
-      const assessmentResults = await this.performEnhancedAssessment(transcript, voiceMetrics, scenario)
+      // Use AI assessment engine for sophisticated conversation analysis
+      const assessmentResults = await this.performAIAssessment(transcript, voiceMetrics, scenario)
       
       // Update assessment with results
       await db('conversation_assessments')
@@ -91,7 +91,7 @@ class AssessmentProcessor {
           await db('conversation_assessments')
             .where('id', assessmentId)
             .update({
-              ai_feedback: JSON.stringify(assessmentResults),
+              personalized_feedback: JSON.stringify(assessmentResults),
               status: 'completed',
               completed_at: new Date()
             })
@@ -125,10 +125,16 @@ class AssessmentProcessor {
 
   async performAIAssessment(transcript, voiceMetrics, scenario) {
     console.log('🤖 Running AI-powered assessment analysis...')
+    console.log('🔍 AI clients available:', {
+      gemini: !!this.gemini,
+      anthropic: !!this.anthropic,  
+      openai: !!this.openai
+    })
     
     try {
       // Use AI analysis if available, otherwise fallback to rule-based
       if (this.gemini || this.anthropic || this.openai) {
+        console.log('✅ AI client available, proceeding with AI analysis')
         return await this.performAIAnalysis(transcript, voiceMetrics, scenario)
       } else {
         console.log('⚠️ No AI API available, using enhanced fallback assessment')
@@ -136,7 +142,8 @@ class AssessmentProcessor {
       }
       
     } catch (error) {
-      console.error('Error in AI assessment analysis:', error)
+      console.error('❌ Error in AI assessment analysis:', error)
+      console.error('🔍 Error stack:', error.stack)
       // Fallback to basic assessment if AI analysis fails
       console.log('🔄 Falling back to basic assessment due to AI error')
       return await this.performEnhancedFallbackAssessment(transcript, voiceMetrics, scenario)
@@ -319,33 +326,97 @@ Generate your analysis now based on the provided conversation transcript and sce
       
       const parsed = JSON.parse(jsonMatch[0])
       
-      // Calculate overall score
-      const overall = Math.round(
-        (parsed.claimingValue.score * 0.35) + 
-        (parsed.creatingValue.score * 0.35) + 
-        (parsed.relationshipManagement.score * 0.30)
-      )
-      
-      // Aggregate all techniques
-      const allTechniques = [
-        ...(parsed.claimingValue.analysis.techniques || []),
-        ...(parsed.creatingValue.analysis.techniques || []),
-        ...(parsed.relationshipManagement.analysis.techniques || [])
-      ]
-      
-      return {
-        claimingValue: parsed.claimingValue,
-        creatingValue: parsed.creatingValue,
-        relationshipManagement: parsed.relationshipManagement,
-        overall,
-        allTechniques,
-        conversationFlow: parsed.conversationFlow || this.analyzeConversationFlow(parsed.transcript),
-        emotionalIntelligence: parsed.emotionalIntelligence || { empathyScore: 50 },
-        languagePatterns: parsed.languagePatterns || { patterns: [] },
-        strengths: parsed.strengths || [],
-        developmentAreas: parsed.developmentAreas || [],
-        specificExamples: parsed.specificExamples || [],
-        aiGenerated: true
+      // Handle new comprehensive feedback format
+      if (parsed.dimensionScores) {
+        // New format with dimensionScores
+        const overall = Math.round(
+          (parsed.dimensionScores.claimingValue.score * 0.35) + 
+          (parsed.dimensionScores.creatingValue.score * 0.35) + 
+          (parsed.dimensionScores.relationshipManagement.score * 0.30)
+        )
+        
+        return {
+          // Database-compatible format
+          claimingValue: { 
+            score: parsed.dimensionScores.claimingValue.score,
+            analysis: {
+              assessment: parsed.dimensionScores.claimingValue.assessment,
+              techniques: parsed.dimensionScores.claimingValue.keyStrengths || []
+            }
+          },
+          creatingValue: { 
+            score: parsed.dimensionScores.creatingValue.score,
+            analysis: {
+              assessment: parsed.dimensionScores.creatingValue.assessment,
+              techniques: parsed.dimensionScores.creatingValue.keyStrengths || []
+            }
+          },
+          relationshipManagement: { 
+            score: parsed.dimensionScores.relationshipManagement.score,
+            analysis: {
+              assessment: parsed.dimensionScores.relationshipManagement.assessment,
+              techniques: parsed.dimensionScores.relationshipManagement.keyStrengths || []
+            }
+          },
+          overall,
+          allTechniques: [],
+          conversationFlow: this.analyzeConversationFlow(''),
+          emotionalIntelligence: { empathyScore: 50 },
+          languagePatterns: { patterns: [] },
+          strengths: parsed.whatWasDoneWell?.examples?.map(e => e.concept) || [],
+          developmentAreas: parsed.areasForImprovement?.examples?.map(e => e.suggestion) || [],
+          specificExamples: parsed.specificExamples || [],
+          // UI-compatible format for frontend
+          scores: {
+            overall,
+            claimingValue: parsed.dimensionScores.claimingValue.score,
+            creatingValue: parsed.dimensionScores.creatingValue.score,
+            relationshipManagement: parsed.dimensionScores.relationshipManagement.score
+          },
+          summary: parsed.executiveSummary || 'AI-generated comprehensive negotiation analysis completed.',
+          improvements: parsed.areasForImprovement?.examples || [],
+          performanceAnalysis: {
+            claimingValue: {
+              score: parsed.dimensionScores.claimingValue.score,
+              assessment: parsed.dimensionScores.claimingValue.assessment,
+              developmentFocus: parsed.dimensionScores.claimingValue.developmentFocus
+            },
+            creatingValue: {
+              score: parsed.dimensionScores.creatingValue.score,
+              assessment: parsed.dimensionScores.creatingValue.assessment,
+              developmentFocus: parsed.dimensionScores.creatingValue.developmentFocus
+            },
+            relationshipManagement: {
+              score: parsed.dimensionScores.relationshipManagement.score,
+              assessment: parsed.dimensionScores.relationshipManagement.assessment,
+              developmentFocus: parsed.dimensionScores.relationshipManagement.developmentFocus
+            }
+          },
+          nextStepsFocusAreas: parsed.nextStepsFocusAreas,
+          aiGenerated: true
+        }
+      } else {
+        // Legacy format fallback
+        const overall = Math.round(
+          (parsed.claimingValue.score * 0.35) + 
+          (parsed.creatingValue.score * 0.35) + 
+          (parsed.relationshipManagement.score * 0.30)
+        )
+        
+        return {
+          claimingValue: parsed.claimingValue,
+          creatingValue: parsed.creatingValue,
+          relationshipManagement: parsed.relationshipManagement,
+          overall,
+          allTechniques: [],
+          conversationFlow: this.analyzeConversationFlow(''),
+          emotionalIntelligence: { empathyScore: 50 },
+          languagePatterns: { patterns: [] },
+          strengths: parsed.strengths || [],
+          developmentAreas: parsed.developmentAreas || [],
+          specificExamples: parsed.specificExamples || [],
+          aiGenerated: true
+        }
       }
       
     } catch (error) {

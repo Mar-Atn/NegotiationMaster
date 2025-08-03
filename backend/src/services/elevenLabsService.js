@@ -413,20 +413,21 @@ class ElevenLabsService extends EventEmitter {
    */
   formatElevenLabsTranscript(conversationData) {
     try {
-      // ElevenLabs transcript format may vary, adapt as needed
+      // ElevenLabs transcript format based on actual API response
       const messages = conversationData.transcript || conversationData.messages || []
       
-      return messages.map((message, index) => ({
-        id: message.id || `msg_${index}`,
-        speaker: message.role === 'user' ? 'You' : (message.speaker || 'AI'),
-        message: message.text || message.content || message.message,
-        timestamp: message.timestamp || message.created_at,
+      return messages.map((msg, index) => ({
+        id: msg.id || `msg_${index}`,
+        speaker: msg.role === 'user' ? 'You' : (msg.role === 'agent' ? 'AI' : 'System'),
+        message: msg.message || msg.text || msg.content || '',
+        timestamp: msg.time_in_call_secs ? new Date(Date.now() + msg.time_in_call_secs * 1000).toISOString() : new Date().toISOString(),
         isFinal: true,
         metadata: {
-          originalRole: message.role,
-          originalSpeaker: message.speaker,
-          confidence: message.confidence,
-          duration: message.duration
+          originalRole: msg.role,
+          timeInCall: msg.time_in_call_secs,
+          interrupted: msg.interrupted,
+          sourceMedium: msg.source_medium,
+          conversationTurnMetrics: msg.conversation_turn_metrics
         }
       }))
       
