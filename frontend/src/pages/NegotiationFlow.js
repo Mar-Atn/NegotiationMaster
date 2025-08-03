@@ -15,13 +15,14 @@ import apiClient from '../services/apiService'
 import CaseContext from '../components/CaseContext/CaseContext'
 import VoiceConversation from '../components/VoiceConversation/VoiceConversation'
 import ConversationFeedback from '../components/ConversationFeedback/ConversationFeedback'
+import AssessmentProcessing from '../components/AssessmentProcessing/AssessmentProcessing'
 
 const NegotiationFlow = () => {
   const { scenarioId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
   
-  const [currentPhase, setCurrentPhase] = useState('context') // 'context', 'conversation', 'feedback'
+  const [currentPhase, setCurrentPhase] = useState('context') // 'context', 'conversation', 'assessment', 'feedback'
   const [scenario, setScenario] = useState(null)
   const [character, setCharacter] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -30,6 +31,23 @@ const NegotiationFlow = () => {
   const [negotiationId, setNegotiationId] = useState(null)
   const [assessmentLoading, setAssessmentLoading] = useState(false)
   const [assessmentError, setAssessmentError] = useState(null)
+
+  // Navigation guard for assessment phase
+  useEffect(() => {
+    if (currentPhase === 'assessment') {
+      const handleBeforeUnload = (event) => {
+        const message = 'Your assessment is still processing. Are you sure you want to leave?'
+        event.returnValue = message
+        return message
+      }
+      
+      window.addEventListener('beforeunload', handleBeforeUnload)
+      
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload)
+      }
+    }
+  }, [currentPhase])
 
   useEffect(() => {
     const loadScenarioData = async () => {
@@ -77,23 +95,22 @@ const NegotiationFlow = () => {
 
   const handleEndConversation = async (conversationResults) => {
     try {
-      console.log('🏁 Conversation ended, starting assessment process...', conversationResults)
+      console.log('🏁 Conversation ended, checking for automatic assessment trigger...', conversationResults)
       setConversationData(conversationResults)
-      setAssessmentLoading(true)
-      setAssessmentError(null)
       
-      // Trigger assessment analysis
-      await triggerAssessmentAnalysis(conversationResults.negotiationId, conversationResults)
-      
-      // Move to feedback phase
-      setCurrentPhase('feedback')
+      // Check if conversation should trigger automatic assessment
+      if (conversationResults.shouldTriggerAssessment) {
+        console.log('🎯 Triggering automatic assessment flow')
+        setCurrentPhase('assessment')
+      } else {
+        console.log('⚠️ Skipping assessment - conversation too short or errored')
+        setCurrentPhase('feedback')
+      }
     } catch (error) {
       console.error('❌ Error processing conversation end:', error)
       setAssessmentError(error.message)
       // Still proceed to feedback, which will handle the error gracefully
       setCurrentPhase('feedback')
-    } finally {
-      setAssessmentLoading(false)
     }
   }
 
@@ -146,6 +163,11 @@ const NegotiationFlow = () => {
   }
 
   const handleBackToDashboard = () => {
+    // Check if assessment is in progress
+    if (currentPhase === 'assessment') {
+      console.warn('⚠️ User trying to navigate away during assessment')
+      // Could add confirmation dialog here if needed
+    }
     navigate('/dashboard')
   }
 
@@ -155,6 +177,7 @@ const NegotiationFlow = () => {
     setNegotiationId(newNegotiationId)
     console.log('🔄 Restarting scenario with new negotiation ID:', newNegotiationId)
     
+    // Reset all state
     setCurrentPhase('context')
     setConversationData(null)
     setAssessmentError(null)
@@ -169,6 +192,26 @@ const NegotiationFlow = () => {
   const handlePracticeAgain = () => {
     console.log('🔄 Practice Again clicked')
     handleRestartScenario()
+  }
+
+  // Assessment phase handlers
+  const handleAssessmentComplete = (assessmentData) => {
+    console.log('✅ Assessment completed successfully:', assessmentData)
+    setAssessmentLoading(false)
+    setAssessmentError(null)
+    setCurrentPhase('feedback')
+  }
+
+  const handleAssessmentRetry = () => {
+    console.log('🔄 Retrying assessment')
+    setAssessmentError(null)
+    // Assessment component will handle the retry internally
+  }
+
+  const handleAssessmentTimeout = () => {
+    console.warn('⏰ Assessment timed out')
+    setAssessmentError('Assessment is taking longer than expected. You can continue to see your conversation transcript.')
+    setCurrentPhase('feedback')
   }
 
   if (loading) {
@@ -248,6 +291,18 @@ const NegotiationFlow = () => {
             onEndConversation={handleEndConversation}
             onPause={handlePauseConversation}
             onResume={handleResumeConversation}
+          />
+        </Box>
+      </Fade>
+
+      <Fade in={currentPhase === 'assessment'} mountOnEnter unmountOnExit>
+        <Box sx={{ display: currentPhase === 'assessment' ? 'block' : 'none' }}>
+          <AssessmentProcessing
+            negotiationId={conversationData?.negotiationId || negotiationId}
+            conversationData={conversationData}
+            onAssessmentComplete={handleAssessmentComplete}
+            onRetry={handleAssessmentRetry}
+            onTimeout={handleAssessmentTimeout}
           />
         </Box>
       </Fade>

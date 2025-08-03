@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid')
 const db = require('../config/database')
 const AssessmentEngine = require('./assessmentEngine')
+const progressCalculationService = require('./progressCalculationService')
 const Anthropic = require('@anthropic-ai/sdk')
 const OpenAI = require('openai')
 const { GoogleGenerativeAI } = require('@google/generative-ai')
@@ -97,6 +98,16 @@ class AssessmentProcessor {
             })
           console.log('✅ AI feedback saved directly to database')
         }
+      }
+      
+      // Update user progress after assessment completion
+      try {
+        console.log('📊 Updating user progress after assessment completion...')
+        await progressCalculationService.updateUserProgress(userId, assessmentId)
+        console.log('✅ User progress updated successfully')
+      } catch (progressError) {
+        console.error('❌ Error updating user progress:', progressError)
+        // Don't fail the entire assessment if progress update fails
       }
       
       return {

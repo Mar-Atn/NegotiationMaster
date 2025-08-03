@@ -15,6 +15,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
+import MyProgress from './pages/MyProgress'
 import NegotiationChat from './pages/NegotiationChat'
 import NegotiationFlow from './pages/NegotiationFlow'
 import VoiceTest from './pages/VoiceTest'
@@ -42,6 +43,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-progress" 
+                element={
+                  <ProtectedRoute>
+                    <MyProgress />
                   </ProtectedRoute>
                 } 
               />

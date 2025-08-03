@@ -82,10 +82,25 @@ class ProfessionalAssessmentService {
    */
   async getElevenLabsConversationData(conversationId) {
     try {
-      const elevenLabsService = require('./elevenLabsService')
+      // Use the same approach as the working transcript endpoint
+      const axios = require('axios')
+      const logger = require('../config/logger')
       
-      // Fetch transcript from ElevenLabs
-      const transcript = await elevenLabsService.getConversationHistory(conversationId)
+      const apiKey = process.env.ELEVENLABS_API_KEY
+      if (!apiKey) {
+        throw new Error('ElevenLabs API key not configured')
+      }
+      
+      // Fetch transcript from ElevenLabs directly
+      const url = `https://api.elevenlabs.io/v1/convai/conversations/${conversationId}`
+      const headers = {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json'
+      }
+      
+      const response = await axios.get(url, { headers })
+      const conversationData = response.data
+      const transcript = conversationData.transcript || []
       
       if (!transcript || !transcript.length) {
         return null

@@ -210,6 +210,41 @@ const VoiceConversation = ({
       // Log the conversation ID for transcript fetching
       if (elevenLabsConversationId) {
         console.log('📝 Conversation finalized, ID available for transcript:', elevenLabsConversationId)
+        
+        // If disconnect happened unexpectedly (not during manual end), trigger assessment
+        if (sessionState !== 'ending' && conversationTime > 30) {
+          console.log('🎯 Unexpected disconnect detected, triggering assessment automatically')
+          
+          const conversationResults = {
+            negotiationId: negotiationId || `negotiation-${Date.now()}`,
+            elevenLabsConversationId: elevenLabsConversationId,
+            transcript: transcript,
+            conversationHistory: conversationHistory,
+            duration: conversationTime,
+            character: character,
+            scenario: scenario,
+            endedAt: new Date().toISOString(),
+            sessionMetrics: {
+              totalMessages: transcript.length,
+              userMessages: transcript.filter(t => t.speaker === 'You' || t.speaker === 'user').length,
+              aiMessages: transcript.filter(t => t.speaker !== 'You' && t.speaker !== 'user' && t.speaker !== 'System').length,
+              averageResponseTime: 2.5,
+              hadFallbackTranscript: false,
+              endedBy: 'system_disconnect'
+            },
+            metadata: {
+              source: 'elevenlabs_voice_conversation',
+              hasElevenLabsId: true,
+              clientTranscriptLength: transcript.length,
+              usedFallbackTranscript: false,
+              conversationDuration: conversationTime,
+              endType: 'unexpected_disconnect'
+            },
+            shouldTriggerAssessment: true
+          }
+          
+          onEndConversation?.(conversationResults)
+        }
       }
     }
   })
@@ -850,7 +885,7 @@ const VoiceConversation = ({
         ]
       }
 
-      // Prepare conversation data for assessment
+      // Prepare conversation data for automatic assessment trigger
       const conversationResults = {
         negotiationId: negotiationId || `negotiation-${Date.now()}`,
         elevenLabsConversationId: elevenLabsConversationId || conversation?.id || conversation?.conversationId || sessionId,
@@ -875,18 +910,20 @@ const VoiceConversation = ({
           clientTranscriptLength: transcript.length,
           usedFallbackTranscript: transcript.length === 0 && finalTranscript.length > 0,
           conversationDuration: conversationTime
-        }
+        },
+        // Flag to trigger automatic assessment
+        shouldTriggerAssessment: true
       }
       
-      console.log('📊 Conversation results prepared for assessment:', conversationResults)
+      console.log('📊 Conversation results prepared for automatic assessment:', conversationResults)
       
       // Reset state
       setConnectionStatus('disconnected')
-      setSessionState('idle')
+      setSessionState('ended')
       
-      // Call parent with conversation results to trigger assessment
+      // Call parent with conversation results to trigger automatic assessment flow
       onEndConversation?.(conversationResults)
-      console.log('✅ ElevenLabs conversation ended successfully')
+      console.log('✅ ElevenLabs conversation ended successfully - assessment flow will start automatically')
     } catch (error) {
       console.error('❌ Failed to end ElevenLabs conversation:', error)
       setError(`Failed to end conversation: ${error.message}`)
@@ -900,11 +937,12 @@ const VoiceConversation = ({
         character: character,
         scenario: scenario,
         endedAt: new Date().toISOString(),
-        error: error.message
+        error: error.message,
+        shouldTriggerAssessment: conversationTime > 30 // Only trigger if conversation was meaningful
       }
       onEndConversation?.(basicResults)
     }
-  }, [conversation, onEndConversation, negotiationId, transcript, conversationHistory, conversationTime, character, scenario])
+  }, [conversation, onEndConversation, negotiationId, transcript, conversationHistory, conversationTime, character, scenario, elevenLabsConversationId, sessionId])
 
   const handleRetry = useCallback(async () => {
     try {

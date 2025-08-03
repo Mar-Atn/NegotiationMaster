@@ -22,6 +22,8 @@ const voiceRoutes = require('./routes/voice')
 const debugRoutes = require('./routes/debug')
 const performanceRoutes = require('./routes/performance')
 const assessmentRoutes = require('./routes/assessment')
+const progressRoutes = require('./routes/progress')
+const conversationsRoutes = require('./routes/conversations')
 
 const app = express()
 const server = createServer(app)
@@ -111,6 +113,8 @@ app.use('/api/voice', voiceRoutes)
 app.use('/api/debug', debugRoutes)
 app.use('/api/performance', performanceRoutes)
 app.use('/api/assessment', assessmentRoutes)
+app.use('/api/progress', progressRoutes)
+app.use('/api/conversations', conversationsRoutes)
 
 app.use('*', (req, res) => {
   res.status(404).json({

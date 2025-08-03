@@ -10,7 +10,7 @@ import {
   MenuItem,
   IconButton
 } from '@mui/material'
-import { AccountCircle, Logout, BugReport } from '@mui/icons-material'
+import { AccountCircle, Logout, BugReport, TrendingUp } from '@mui/icons-material'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
@@ -43,6 +43,10 @@ const Header = () => {
     navigate('/dashboard')
   }
 
+  const handleMyProgress = () => {
+    navigate('/my-progress')
+  }
+
   const handleTestMenu = (event) => {
     setTestMenuAnchorEl(event.currentTarget)
   }
@@ -67,6 +71,14 @@ const Header = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Button color="inherit" onClick={handleDashboard}>
               Dashboard
+            </Button>
+            
+            <Button 
+              color="inherit" 
+              onClick={handleMyProgress}
+              startIcon={<TrendingUp />}
+            >
+              My Progress
             </Button>
             
             <Button 
