@@ -20,6 +20,7 @@ import NegotiationFlow from './pages/NegotiationFlow'
 import VoiceTest from './pages/VoiceTest'
 import AcademicPrototype from './pages/AcademicPrototype'
 import TranscriptTest from './pages/TranscriptTest'
+import AssessmentTest from './pages/AssessmentTest'
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
               <Route path="/voice-test" element={<VoiceTest />} />
               <Route path="/academic-prototype" element={<AcademicPrototype />} />
               <Route path="/transcript-test" element={<TranscriptTest />} />
+              <Route path="/assessment-test" element={<AssessmentTest />} />
               <Route 
                 path="/dashboard" 
                 element={

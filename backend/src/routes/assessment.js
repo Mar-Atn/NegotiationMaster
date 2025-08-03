@@ -7,6 +7,7 @@ const { authenticateToken } = require('../middleware/auth')
 router.get('/demo/feedback/:negotiationId', assessmentController.getDemoFeedback)
 router.post('/demo/analyze/:negotiationId', assessmentController.getDemoFeedback)
 router.get('/demo/results/:negotiationId', assessmentController.getDemoFeedback)
+router.post('/demo/generate', assessmentController.generateAssessment)
 
 // Demo routes that bypass authentication for Sprint 1 testing
 router.post('/:negotiationId/analyze', (req, res, next) => {
@@ -27,6 +28,9 @@ router.get('/:negotiationId/results', assessmentController.getDemoFeedback)
 
 // All other assessment routes require authentication
 router.use(authenticateToken)
+
+// NEW: Generate comprehensive professional assessment (main endpoint)
+router.post('/generate', assessmentController.generateAssessment)
 
 // Trigger assessment analysis for a completed conversation
 router.post('/analyze/:negotiationId', assessmentController.analyzeConversation)

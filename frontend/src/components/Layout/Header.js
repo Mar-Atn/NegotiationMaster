@@ -10,7 +10,7 @@ import {
   MenuItem,
   IconButton
 } from '@mui/material'
-import { AccountCircle, Logout } from '@mui/icons-material'
+import { AccountCircle, Logout, BugReport } from '@mui/icons-material'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
@@ -18,6 +18,7 @@ const Header = () => {
   const { user, logout, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [anchorEl, setAnchorEl] = React.useState(null)
+  const [testMenuAnchorEl, setTestMenuAnchorEl] = React.useState(null)
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget)
@@ -42,6 +43,14 @@ const Header = () => {
     navigate('/dashboard')
   }
 
+  const handleTestMenu = (event) => {
+    setTestMenuAnchorEl(event.currentTarget)
+  }
+
+  const handleTestMenuClose = () => {
+    setTestMenuAnchorEl(null)
+  }
+
   return (
     <AppBar position="static">
       <Toolbar>
@@ -60,6 +69,14 @@ const Header = () => {
               Dashboard
             </Button>
             
+            <Button 
+              color="inherit" 
+              onClick={handleTestMenu}
+              startIcon={<BugReport />}
+            >
+              Test
+            </Button>
+            
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -73,6 +90,35 @@ const Header = () => {
               </Avatar>
             </IconButton>
             
+            <Menu
+              id="test-menu"
+              anchorEl={testMenuAnchorEl}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={Boolean(testMenuAnchorEl)}
+              onClose={handleTestMenuClose}
+            >
+              <MenuItem onClick={() => { handleTestMenuClose(); navigate('/voice-test'); }}>
+                Voice Test
+              </MenuItem>
+              <MenuItem onClick={() => { handleTestMenuClose(); navigate('/transcript-test'); }}>
+                Transcript Test
+              </MenuItem>
+              <MenuItem onClick={() => { handleTestMenuClose(); navigate('/assessment-test'); }}>
+                Assessment Test
+              </MenuItem>
+              <MenuItem onClick={() => { handleTestMenuClose(); navigate('/academic-prototype'); }}>
+                Academic Prototype
+              </MenuItem>
+            </Menu>
+
             <Menu
               id="menu-appbar"
               anchorEl={anchorEl}
@@ -100,6 +146,41 @@ const Header = () => {
           </Box>
         ) : (
           <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button 
+              color="inherit" 
+              onClick={handleTestMenu}
+              startIcon={<BugReport />}
+            >
+              Test
+            </Button>
+            <Menu
+              id="test-menu-guest"
+              anchorEl={testMenuAnchorEl}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={Boolean(testMenuAnchorEl)}
+              onClose={handleTestMenuClose}
+            >
+              <MenuItem onClick={() => { handleTestMenuClose(); navigate('/voice-test'); }}>
+                Voice Test
+              </MenuItem>
+              <MenuItem onClick={() => { handleTestMenuClose(); navigate('/transcript-test'); }}>
+                Transcript Test
+              </MenuItem>
+              <MenuItem onClick={() => { handleTestMenuClose(); navigate('/assessment-test'); }}>
+                Assessment Test
+              </MenuItem>
+              <MenuItem onClick={() => { handleTestMenuClose(); navigate('/academic-prototype'); }}>
+                Academic Prototype
+              </MenuItem>
+            </Menu>
             <Button color="inherit" onClick={() => navigate('/login')}>
               Login
             </Button>

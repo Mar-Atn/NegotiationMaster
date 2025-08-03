@@ -2,8 +2,75 @@ const db = require('../config/database')
 const assessmentQueueService = require('../services/assessmentQueue')
 const redisService = require('../services/redis')
 const logger = require('../config/logger')
+const ProfessionalAssessmentService = require('../services/professionalAssessmentService')
 
 class AssessmentController {
+
+  /**
+   * POST /api/assessment/generate
+   * Generate comprehensive AI-powered assessment following methodology requirements
+   */
+  async generateAssessment(req, res) {
+    try {
+      const { conversationId, scenarioData, userHistory } = req.body
+      
+      if (!conversationId) {
+        return res.status(400).json({
+          success: false,
+          error: 'conversationId is required',
+          code: 'MISSING_CONVERSATION_ID'
+        })
+      }
+
+      logger.info('Professional assessment generation requested', { 
+        conversationId, 
+        hasScenarioData: !!scenarioData,
+        hasUserHistory: !!userHistory
+      })
+
+      // Initialize professional assessment service
+      const professionalService = new ProfessionalAssessmentService()
+
+      // Generate comprehensive assessment
+      const assessmentResult = await professionalService.generateAssessment(
+        conversationId,
+        scenarioData,
+        userHistory
+      )
+
+      logger.info('Professional assessment completed successfully', {
+        conversationId,
+        assessmentId: assessmentResult.assessmentId,
+        overallScore: assessmentResult.scores?.overall,
+        methodologyCompliant: assessmentResult.methodologyCompliant
+      })
+
+      return res.json({
+        success: true,
+        message: 'Professional assessment generated successfully',
+        data: assessmentResult
+      })
+
+    } catch (error) {
+      logger.error('Professional assessment generation failed:', error)
+      
+      // Provide specific error responses
+      if (error.message.includes('not found')) {
+        return res.status(404).json({
+          success: false,
+          error: 'Conversation not found or access denied',
+          code: 'CONVERSATION_NOT_FOUND'
+        })
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to generate professional assessment',
+        code: 'ASSESSMENT_GENERATION_FAILED',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      })
+    }
+  }
 
   async analyzeConversation(req, res) {
     try {

@@ -158,18 +158,37 @@ class AssessmentProcessor {
     try {
       let aiResponse
       
-      // Try Gemini first, then Anthropic, then OpenAI
+      // Try Gemini first for cost-effectiveness, then Anthropic for quality, then OpenAI as fallback
       if (this.gemini) {
-        console.log('📡 Using Google Gemini for analysis')
-        const model = this.gemini.getGenerativeModel({ model: 'gemini-1.5-flash' })
+        console.log('📡 Using Google Gemini Pro for professional analysis')
+        const model = this.gemini.getGenerativeModel({ 
+          model: 'gemini-1.5-pro-latest',
+          generationConfig: {
+            temperature: 0.1,
+            topK: 1,
+            topP: 0.8,
+            maxOutputTokens: 4096
+          },
+          safetySettings: [
+            {
+              category: 'HARM_CATEGORY_HARASSMENT',
+              threshold: 'BLOCK_NONE'
+            },
+            {
+              category: 'HARM_CATEGORY_HATE_SPEECH',
+              threshold: 'BLOCK_NONE'
+            }
+          ]
+        })
         const response = await model.generateContent(prompt)
         aiResponse = response.response.text()
       } else if (this.anthropic) {
-        console.log('📡 Using Anthropic Claude for analysis')
+        console.log('📡 Using Anthropic Claude for premium analysis')
         const response = await this.anthropic.messages.create({
-          model: 'claude-3-sonnet-20240229',
-          max_tokens: 4000,
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 4096,
           temperature: 0.1,
+          system: 'You are Dr. Sarah Mitchell, a Harvard Business School negotiation expert providing executive-level assessment. Your responses must be professional, theory-grounded, and immediately actionable for business leaders.',
           messages: [{
             role: 'user',
             content: prompt
@@ -177,15 +196,22 @@ class AssessmentProcessor {
         })
         aiResponse = response.content[0].text
       } else if (this.openai) {
-        console.log('📡 Using OpenAI GPT-4 for analysis')
+        console.log('📡 Using OpenAI GPT-4 for comprehensive analysis')
         const response = await this.openai.chat.completions.create({
           model: 'gpt-4-turbo-preview',
-          messages: [{
-            role: 'user',
-            content: prompt
-          }],
-          max_tokens: 4000,
-          temperature: 0.1
+          messages: [
+            {
+              role: 'system',
+              content: 'You are Dr. Sarah Mitchell, Senior Executive Coach at Harvard Business School specializing in negotiation assessment. Provide sophisticated, evidence-based analysis that meets C-suite standards.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 4096,
+          temperature: 0.1,
+          top_p: 0.9
         })
         aiResponse = response.choices[0].message.content
       }
@@ -213,107 +239,147 @@ class AssessmentProcessor {
       ? transcript.map(entry => `${entry.speaker}: ${entry.message}`).join('\n')
       : (transcript || 'No transcript available')
 
-    return `You are an expert negotiation coach with advanced knowledge of negotiation theory and practice. You specialize in providing constructive, actionable feedback that helps business professionals develop negotiation skills through specific analysis of their conversation performance.
+    return `You are Dr. Sarah Mitchell, Senior Executive Coach at Harvard Business School's Program on Negotiation, with 15+ years specializing in executive-level negotiation assessment and development. You have deep expertise in Fisher & Ury's principled negotiation framework, advanced game theory applications, and behavioral psychology in high-stakes business negotiations.
 
-Your role is to analyze this conversation and generate personalized feedback (300-400 words) that follows academic negotiation principles while being immediately practical for executive-level professionals.
+Your role is to provide sophisticated, evidence-based assessment that meets C-suite standards for negotiation coaching. Your analysis combines rigorous academic grounding with immediately actionable insights for senior business professionals.
 
-SCENARIO CONTEXT:
+=== NEGOTIATION THEORY FOUNDATION ===
+
+**HARVARD NEGOTIATION METHOD (Fisher & Ury "Getting to Yes"):**
+1. Separate People from Problems - Maintain relationships while addressing substantive issues
+2. Focus on Interests, Not Positions - Explore underlying needs beyond stated demands  
+3. Generate Options for Mutual Gain - Create multiple win-win alternatives before deciding
+4. Use Objective Criteria - Apply fair standards and benchmarks for decisions
+
+**GAME THEORY CONCEPTS:**
+- BATNA (Best Alternative to Negotiated Agreement) - Source of negotiating power
+- ZOPA (Zone of Possible Agreement) - Overlap between reservation points
+- Reciprocity Dynamics - Strategic concession patterns and mutual exchange
+- Prisoner's Dilemma Applications - Balance competitive vs. cooperative strategies
+
+**VALUE DIMENSIONS:**
+- Claiming Value: Competitive negotiation, leverage, position advocacy
+- Creating Value: Collaborative problem-solving, integrative solutions, expanding the pie
+- Relationship Management: Trust building, communication excellence, long-term thinking
+
+=== SCENARIO CONTEXT ===
 ${scenario ? `
-Title: ${scenario.title}
+Scenario: ${scenario.title}
 Description: ${scenario.description}
 Difficulty Level: ${scenario.difficulty_level}
-Learning Objectives: Professional negotiation skill development with focus on real-world application
-` : 'Scenario context not available - analyze based on conversation content'}
+Learning Focus: Advanced business negotiation with theory-grounded skill development
+` : 'Real-world business negotiation scenario - analyze based on conversation dynamics'}
 
-CONVERSATION TRANSCRIPT:
+=== CONVERSATION TRANSCRIPT ===
 ${formattedTranscript}
 
-ANALYSIS FRAMEWORK - Evaluate across THREE CRITICAL DIMENSIONS:
+=== ASSESSMENT FRAMEWORK ===
 
-**DIMENSION 1: CLAIMING VALUE (Competitive Negotiation)**
-Core Assessment Areas:
-- ZOPA (Zone of Possible Agreement): Did they identify and explore the range where deals can be made?
-- BATNA (Best Alternative to Negotiated Agreement): How well did they understand and communicate their alternatives?
-- Reciprocity Concept: Were concessions made strategically with expectation of reciprocity?
-- Prisoner's Dilemma Dynamics: Did they balance competitive vs. cooperative strategies effectively?
+Provide comprehensive analysis across three critical dimensions using the methodology structure below:
 
-**DIMENSION 2: CREATING VALUE (Harvard's 4 Principles)**
-Core Assessment Areas:
-- Separate People from Problems: Did they maintain relationships while addressing business issues?
-- Focus on Interests, Not Positions: Did they explore underlying needs beyond stated positions?
-- Generate Options for Mutual Gain: Were creative win-win solutions developed?
-- Use Objective Criteria: Were decisions based on fair standards and benchmarks?
+**EXECUTIVE SUMMARY (50-75 words)**
+- Overall performance assessment
+- Key strengths and primary development opportunities
+- Professional tone suitable for C-suite feedback
 
-**DIMENSION 3: RELATIONSHIP MANAGEMENT**
-Core Assessment Areas:
-- Trust Building: Did they establish credibility through transparency and follow-through?
-- Communication Style: How effective were their listening and communication approaches?
-- Conflict Resolution: Were disagreements managed constructively without damaging relationships?
-- Long-term Thinking: Did they consider future interactions and reputation impact?
+**WHAT WAS DONE WELL (100-150 words)**
+- Specific examples with exact quotes from conversation
+- Connection to negotiation theory and techniques
+- Impact analysis showing how actions contributed to positive outcomes
 
-REQUIRED OUTPUT FORMAT (Comprehensive Professional Feedback - JSON):
+**AREAS FOR IMPROVEMENT (100-150 words)**
+- Specific missed opportunities with exact quotes
+- Clear identification of suboptimal approaches
+- Actionable suggestions with theoretical rationale
+
+**NEXT STEPS & FOCUS AREAS (50-75 words)**
+- Prioritized development recommendations
+- Specific practice suggestions
+- Clear pathway for skill advancement
+
+**3-DIMENSIONAL SCORING (1-100 scale each):**
+
+*Claiming Value Score:* Competitive negotiation effectiveness
+- ZOPA identification and exploration
+- BATNA development and strategic communication
+- Anchoring, concession management, leverage utilization
+- Position advocacy and deal protection
+
+*Creating Value Score:* Collaborative problem-solving capability  
+- Harvard Principles application (interests vs positions, option generation)
+- Integrative solution development
+- Multi-issue value trades and package deals
+- Creative win-win opportunity identification
+
+*Relationship Management Score:* Interpersonal excellence
+- Trust building and credibility establishment
+- Communication effectiveness and active listening
+- Conflict resolution and de-escalation
+- Long-term relationship consideration
+
+REQUIRED JSON OUTPUT FORMAT:
 {
-  "executiveSummary": "50-75 word overall performance assessment highlighting key strengths and primary development opportunities",
+  "executiveSummary": "Professional assessment highlighting key performance insights",
   "whatWasDoneWell": {
-    "content": "100-150 words with specific examples and theory connections",
+    "content": "Theory-grounded analysis with specific examples",
     "examples": [
       {
-        "quote": "Exact quote from conversation",
-        "concept": "Negotiation theory/technique applied",
-        "impact": "How this specific action contributed to positive outcomes"
+        "quote": "EXACT quote from conversation",
+        "concept": "Specific negotiation theory/technique",
+        "impact": "Clear outcome and effectiveness explanation"
       }
     ]
   },
   "areasForImprovement": {
-    "content": "100-150 words with specific missed opportunities and actionable suggestions",
+    "content": "Specific opportunities with actionable recommendations",
     "examples": [
       {
-        "quote": "Exact quote showing missed opportunity",
-        "issue": "What was suboptimal about this approach",
-        "suggestion": "Specific alternative approach with clear rationale"
+        "quote": "EXACT quote showing opportunity",
+        "issue": "Theoretical analysis of suboptimal approach",
+        "suggestion": "Specific alternative with clear rationale"
       }
     ]
   },
-  "nextStepsFocusAreas": "50-75 words with prioritized development recommendations and specific practice suggestions",
+  "nextStepsFocusAreas": "Prioritized development pathway with specific actions",
   "dimensionScores": {
     "claimingValue": {
-      "score": 75,
-      "assessment": "ZOPA exploration, BATNA utilization, reciprocity dynamics, competitive positioning analysis",
-      "keyStrengths": ["Specific strengths observed"],
-      "developmentFocus": "Specific areas for improvement with theory basis"
+      "score": 0-100,
+      "assessment": "Evidence-based evaluation of competitive negotiation capabilities",
+      "keyStrengths": ["Specific observed strengths"],
+      "developmentFocus": "Theory-based improvement recommendations"
     },
     "creatingValue": {
-      "score": 82,
-      "assessment": "Harvard principles application, interest vs position focus, option generation, objective criteria use",
-      "keyStrengths": ["Specific strengths observed"], 
-      "developmentFocus": "Specific areas for improvement with theory basis"
+      "score": 0-100,
+      "assessment": "Harvard Principles application and collaborative effectiveness",
+      "keyStrengths": ["Specific observed strengths"],
+      "developmentFocus": "Theory-based improvement recommendations"
     },
     "relationshipManagement": {
-      "score": 88,
-      "assessment": "Trust building, communication effectiveness, conflict resolution, long-term thinking analysis",
-      "keyStrengths": ["Specific strengths observed"],
-      "developmentFocus": "Specific areas for improvement with theory basis"
+      "score": 0-100,
+      "assessment": "Interpersonal excellence and long-term relationship impact",
+      "keyStrengths": ["Specific observed strengths"],
+      "developmentFocus": "Theory-based improvement recommendations"
     }
   },
   "specificExamples": [
     {
-      "quote": "Exact conversation quote",
-      "technique": "Specific negotiation concept/technique",
-      "impact": "Effectively moved beyond positions to underlying needs"
+      "quote": "EXACT conversation quote",
+      "technique": "Specific negotiation concept applied",
+      "impact": "Clear explanation of effectiveness and outcomes"
     }
   ]
 }
 
-CRITICAL REQUIREMENTS:
-1. ALL quotes must be EXACT from the conversation transcript - no paraphrasing
-2. Connect every observation to specific negotiation theory (Harvard Method, BATNA, ZOPA, etc.)
-3. Provide actionable, specific suggestions that business professionals can implement immediately
-4. Maintain professional, executive-appropriate tone throughout
-5. Focus on behavior and technique, not personality judgments
-6. Ensure scores reflect actual performance based on conversation evidence
-7. Target 300-400 total words across all sections for comprehensive yet concise feedback
+CRITICAL QUALITY STANDARDS:
+1. ALL quotes must be EXACT from the transcript - zero tolerance for paraphrasing
+2. Every observation must connect to specific negotiation theory (Harvard Method, BATNA, ZOPA, etc.)
+3. Scores must be evidence-based and reflect actual conversation performance
+4. Maintain executive-appropriate professional tone throughout
+5. Focus on behavior and technique, never personality judgments
+6. Provide immediately actionable recommendations for business application
+7. Target 300-400 total words for comprehensive yet concise executive feedback
 
-Generate your analysis now based on the provided conversation transcript and scenario context.`
+Generate your comprehensive analysis now, demonstrating the sophisticated assessment capabilities expected at the highest levels of business negotiation coaching.`
   }
 
   parseAIResponse(aiResponse) {
@@ -328,11 +394,12 @@ Generate your analysis now based on the provided conversation transcript and sce
       
       // Handle new comprehensive feedback format
       if (parsed.dimensionScores) {
-        // New format with dimensionScores
+        // Dynamic weighting based on scenario context and performance
+        const dynamicWeights = this.calculateDynamicWeights(parsed.dimensionScores, scenario)
         const overall = Math.round(
-          (parsed.dimensionScores.claimingValue.score * 0.35) + 
-          (parsed.dimensionScores.creatingValue.score * 0.35) + 
-          (parsed.dimensionScores.relationshipManagement.score * 0.30)
+          (parsed.dimensionScores.claimingValue.score * dynamicWeights.claiming) + 
+          (parsed.dimensionScores.creatingValue.score * dynamicWeights.creating) + 
+          (parsed.dimensionScores.relationshipManagement.score * dynamicWeights.relationship)
         )
         
         return {
@@ -396,7 +463,7 @@ Generate your analysis now based on the provided conversation transcript and sce
           aiGenerated: true
         }
       } else {
-        // Legacy format fallback
+        // Legacy format with standard weighting
         const overall = Math.round(
           (parsed.claimingValue.score * 0.35) + 
           (parsed.creatingValue.score * 0.35) + 
@@ -421,8 +488,86 @@ Generate your analysis now based on the provided conversation transcript and sce
       
     } catch (error) {
       console.error('Failed to parse AI response:', error)
+      console.error('Raw AI response preview:', aiResponse?.substring(0, 500))
       throw new Error('Invalid AI response format')
     }
+  }
+
+  /**
+   * Calculate dynamic weights based on scenario context and performance patterns
+   */
+  calculateDynamicWeights(dimensionScores, scenario) {
+    // Default balanced weights
+    let weights = {
+      claiming: 0.35,
+      creating: 0.35, 
+      relationship: 0.30
+    }
+
+    // Adjust based on scenario difficulty and type
+    if (scenario) {
+      const difficulty = scenario.difficulty_level?.toLowerCase()
+      const title = scenario.title?.toLowerCase() || ''
+      
+      // High-stakes scenarios emphasize claiming value
+      if (difficulty === 'expert' || title.includes('high-stakes') || title.includes('vendor') || title.includes('contract')) {
+        weights.claiming = 0.40
+        weights.creating = 0.35
+        weights.relationship = 0.25
+      }
+      
+      // Partnership/collaborative scenarios emphasize creating value
+      if (title.includes('partnership') || title.includes('collaboration') || title.includes('joint venture')) {
+        weights.claiming = 0.30
+        weights.creating = 0.45
+        weights.relationship = 0.25
+      }
+      
+      // Long-term relationship scenarios emphasize relationship management
+      if (title.includes('relationship') || title.includes('ongoing') || title.includes('supplier')) {
+        weights.claiming = 0.25
+        weights.creating = 0.35
+        weights.relationship = 0.40
+      }
+    }
+
+    // Performance-based adjustment - boost weight of strongest dimension slightly
+    if (dimensionScores) {
+      const scores = {
+        claiming: dimensionScores.claimingValue?.score || 0,
+        creating: dimensionScores.creatingValue?.score || 0,
+        relationship: dimensionScores.relationshipManagement?.score || 0
+      }
+      
+      const maxScore = Math.max(scores.claiming, scores.creating, scores.relationship)
+      const minScore = Math.min(scores.claiming, scores.creating, scores.relationship)
+      
+      // If there's exceptional performance in one dimension (20+ point gap), slightly boost its weight
+      if (maxScore - minScore >= 20) {
+        const topDimension = Object.keys(scores).find(key => scores[key] === maxScore)
+        if (topDimension && weights[topDimension] < 0.45) {
+          const boost = 0.05
+          weights[topDimension] += boost
+          
+          // Redistribute the boost from other dimensions
+          const otherDimensions = Object.keys(weights).filter(key => key !== topDimension)
+          otherDimensions.forEach(dim => {
+            weights[dim] -= boost / otherDimensions.length
+          })
+        }
+      }
+    }
+
+    // Ensure weights sum to 1.0
+    const totalWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0)
+    if (Math.abs(totalWeight - 1.0) > 0.01) {
+      Object.keys(weights).forEach(key => {
+        weights[key] = weights[key] / totalWeight
+      })
+    }
+
+    console.log('🎯 Dynamic weighting applied:', weights)
+    return weights
   }
 
   enhanceWithVoiceMetrics(assessment, voiceMetrics) {

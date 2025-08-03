@@ -131,4 +131,125 @@ apiClient.interceptors.response.use(
   }
 )
 
+// Assessment API methods
+export const assessmentApi = {
+  /**
+   * Generate a comprehensive professional assessment for a conversation
+   */
+  async generateAssessment(conversationId, scenarioData = null, userHistory = null) {
+    try {
+      console.log('🎯 Generating assessment for conversation:', conversationId)
+      
+      const response = await apiClient.post('/assessment/generate', {
+        conversationId,
+        scenarioData,
+        userHistory
+      })
+      
+      console.log('✅ Assessment generated successfully:', {
+        conversationId,
+        assessmentId: response.data.data?.assessmentId,
+        overallScore: response.data.data?.scores?.overall
+      })
+      
+      return response.data
+      
+    } catch (error) {
+      console.error('❌ Assessment generation failed:', error)
+      throw new Error(error.response?.data?.error || 'Failed to generate assessment')
+    }
+  },
+
+  /**
+   * Get assessment results for a specific negotiation/conversation
+   */
+  async getAssessmentResults(negotiationId) {
+    try {
+      const response = await apiClient.get(`/assessment/results/${negotiationId}`)
+      return response.data
+    } catch (error) {
+      console.error('❌ Failed to get assessment results:', error)
+      throw new Error(error.response?.data?.error || 'Failed to retrieve assessment results')
+    }
+  },
+
+  /**
+   * Get assessment status (processing, completed, failed)
+   */
+  async getAssessmentStatus(negotiationId) {
+    try {
+      const response = await apiClient.get(`/assessment/status/${negotiationId}`)
+      return response.data
+    } catch (error) {
+      console.error('❌ Failed to get assessment status:', error)
+      throw new Error(error.response?.data?.error || 'Failed to retrieve assessment status')
+    }
+  },
+
+  /**
+   * Get comprehensive feedback for a conversation
+   */
+  async getComprehensiveFeedback(negotiationId) {
+    try {
+      const response = await apiClient.get(`/assessment/feedback/${negotiationId}`)
+      return response.data
+    } catch (error) {
+      console.error('❌ Failed to get comprehensive feedback:', error)
+      throw new Error(error.response?.data?.error || 'Failed to retrieve feedback')
+    }
+  },
+
+  /**
+   * Get user's assessment history
+   */
+  async getUserAssessmentHistory(userId) {
+    try {
+      const response = await apiClient.get(`/assessment/history/${userId}`)
+      return response.data
+    } catch (error) {
+      console.error('❌ Failed to get user assessment history:', error)
+      throw new Error(error.response?.data?.error || 'Failed to retrieve assessment history')
+    }
+  },
+
+  /**
+   * Get user's progress summary across all assessments
+   */
+  async getUserProgress(userId) {
+    try {
+      const response = await apiClient.get(`/assessment/progress/${userId}`)
+      return response.data
+    } catch (error) {
+      console.error('❌ Failed to get user progress:', error)
+      throw new Error(error.response?.data?.error || 'Failed to retrieve user progress')
+    }
+  },
+
+  /**
+   * Retry a failed assessment
+   */
+  async retryAssessment(negotiationId) {
+    try {
+      const response = await apiClient.post(`/assessment/retry/${negotiationId}`)
+      return response.data
+    } catch (error) {
+      console.error('❌ Failed to retry assessment:', error)
+      throw new Error(error.response?.data?.error || 'Failed to retry assessment')
+    }
+  },
+
+  /**
+   * Get assessment criteria for a scenario
+   */
+  async getAssessmentCriteria(scenarioId) {
+    try {
+      const response = await apiClient.get(`/assessment/criteria/${scenarioId}`)
+      return response.data
+    } catch (error) {
+      console.error('❌ Failed to get assessment criteria:', error)
+      throw new Error(error.response?.data?.error || 'Failed to retrieve assessment criteria')
+    }
+  }
+}
+
 export default apiClient
