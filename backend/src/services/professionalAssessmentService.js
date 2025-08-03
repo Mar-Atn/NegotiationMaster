@@ -682,19 +682,89 @@ class ProfessionalAssessmentService {
 
   /**
    * Generate basic professional assessment as ultimate fallback
+   * Now with CRITICAL scoring based on actual conversation quality
    */
   generateBasicProfessionalAssessment(transcript, scenario, userProfile) {
-    const baseScore = 65
-    const variance = 15
+    // Analyze transcript quality for realistic scoring
+    const transcriptQuality = this.analyzeTranscriptQuality(transcript)
+    
+    // Base score starts much lower and depends on conversation quality
+    let baseScore = 20 // Start very low for minimal conversations
+    
+    // Adjust based on conversation quality
+    if (transcriptQuality.messageCount > 20) baseScore += 20
+    if (transcriptQuality.messageCount > 10) baseScore += 15
+    if (transcriptQuality.messageCount > 5) baseScore += 10
+    if (transcriptQuality.averageMessageLength > 50) baseScore += 10
+    if (transcriptQuality.questionCount > 3) baseScore += 10
+    if (transcriptQuality.negotiationTerms > 2) baseScore += 15
+    
+    // Cap at reasonable maximum for fallback assessment
+    baseScore = Math.min(baseScore, 75)
+    
+    const variance = Math.max(5, Math.floor(baseScore * 0.15)) // Smaller variance for low scores
     
     const scores = {
-      overall: baseScore + Math.floor(Math.random() * variance),
-      claimingValue: baseScore + Math.floor(Math.random() * variance),
-      creatingValue: baseScore + Math.floor(Math.random() * variance),
-      relationshipManagement: baseScore + Math.floor(Math.random() * variance)
+      overall: Math.max(15, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2)),
+      claimingValue: Math.max(10, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2)),
+      creatingValue: Math.max(10, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2)),
+      relationshipManagement: Math.max(15, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2))
     }
 
+    console.log(`🎯 Critical Assessment - Transcript Quality:`, transcriptQuality)
+    console.log(`📊 Resulting Scores:`, scores)
+
     return this.restructureToMethodology({ scores }, scenario, userProfile)
+  }
+
+  /**
+   * Analyze transcript quality for realistic scoring
+   */
+  analyzeTranscriptQuality(transcript) {
+    if (!transcript || typeof transcript !== 'string') {
+      return {
+        messageCount: 0,
+        averageMessageLength: 0,
+        questionCount: 0,
+        negotiationTerms: 0,
+        quality: 'minimal'
+      }
+    }
+
+    // Count messages (assuming format with role indicators)
+    const messages = transcript.split(/\n|user:|assistant:|User:|Assistant:/).filter(msg => 
+      msg.trim().length > 5
+    )
+    
+    const messageCount = messages.length
+    const totalLength = transcript.length
+    const averageMessageLength = messageCount > 0 ? totalLength / messageCount : 0
+    
+    // Count questions (engagement indicator)
+    const questionCount = (transcript.match(/\?/g) || []).length
+    
+    // Count negotiation-specific terms
+    const negotiationTerms = [
+      'price', 'cost', 'budget', 'deal', 'offer', 'propose', 'negotiate', 
+      'terms', 'agreement', 'compromise', 'value', 'benefit', 'trade-off',
+      'alternative', 'option', 'solution', 'interest', 'position', 'BATNA'
+    ].filter(term => 
+      transcript.toLowerCase().includes(term.toLowerCase())
+    ).length
+
+    let quality = 'minimal'
+    if (messageCount > 15 && negotiationTerms > 5) quality = 'excellent'
+    else if (messageCount > 10 && negotiationTerms > 3) quality = 'good' 
+    else if (messageCount > 5 && negotiationTerms > 1) quality = 'fair'
+    else if (messageCount > 2) quality = 'basic'
+
+    return {
+      messageCount,
+      averageMessageLength: Math.round(averageMessageLength),
+      questionCount,
+      negotiationTerms,
+      quality
+    }
   }
 
   // Analysis helper methods (simplified implementations)

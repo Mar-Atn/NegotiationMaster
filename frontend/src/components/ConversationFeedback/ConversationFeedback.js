@@ -217,8 +217,9 @@ const ConversationFeedback = ({
                   Your Negotiation Performance
                 </Typography>
                 
+                {/* First Row: Overall Score and Performance Percentile */}
                 <Grid container spacing={3} sx={{ mb: 3 }}>
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={6}>
                     {renderScoreCard(
                       'Overall Score', 
                       Math.round(assessmentData.scores?.overall || 70), 
@@ -226,6 +227,28 @@ const ConversationFeedback = ({
                       <Star sx={{ fontSize: '2rem' }} />
                     )}
                   </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%)' }}>
+                      <CardContent sx={{ textAlign: 'center', py: 3 }}>
+                        <Box sx={{ color: '#4caf50', mb: 1 }}>
+                          <TrendingUp sx={{ fontSize: '2rem' }} />
+                        </Box>
+                        <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'success.main', mb: 1 }}>
+                          {assessmentData.percentile || 50}%
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                          Performance Percentile
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          Better than {assessmentData.percentile || 50}% of users
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+                
+                {/* Second Row: 3 Sub-Skills */}
+                <Grid container spacing={3}>
                   <Grid item xs={12} md={4}>
                     {renderScoreCard(
                       'Claiming Value', 
@@ -242,31 +265,13 @@ const ConversationFeedback = ({
                       <Psychology sx={{ fontSize: '2rem' }} />
                     )}
                   </Grid>
-                </Grid>
-                
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} md={4}>
                     {renderScoreCard(
                       'Relationship Mgmt', 
                       Math.round(assessmentData.scores?.relationshipManagement || 70), 
                       '#9c27b0',
                       <Psychology sx={{ fontSize: '2rem' }} />
                     )}
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%)' }}>
-                      <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main', mb: 1 }}>
-                          Performance Percentile
-                        </Typography>
-                        <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'success.main', mb: 1 }}>
-                          {assessmentData.percentile || 50}%
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Better than {assessmentData.percentile || 50}% of users
-                        </Typography>
-                      </CardContent>
-                    </Card>
                   </Grid>
                 </Grid>
               </CardContent>
