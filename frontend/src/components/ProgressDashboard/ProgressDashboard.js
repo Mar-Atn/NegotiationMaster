@@ -203,7 +203,7 @@ const ProgressDashboard = () => {
 
       {/* Current Scores Overview - All Four Scores in Single Row */}
       <Box sx={{ mb: 4 }}>
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
           {/* Overall Score - First in Row but Narrower */}
           {progressData.currentProgress.scores.overall && (
             <Grid item xs={12} sm={6} md={3}>
@@ -218,18 +218,18 @@ const ProgressDashboard = () => {
                   color: 'white',
                   boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)'
                 }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold', color: 'white' }}>
+                  <CardContent sx={{ p: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                      <Typography variant="body1" component="h3" sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.95rem' }}>
                         Overall Score
                       </Typography>
                       {getTrendIcon(progressData.currentProgress.scores.overall.trend)}
                     </Box>
                     
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    <Box sx={{ mb: 1.5 }}>
+                      <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '1.8rem' }}>
                         {Math.round(progressData.currentProgress.scores.overall.current)}
-                        <Typography variant="h6" component="span" sx={{ opacity: 0.8, ml: 1 }}>
+                        <Typography variant="h6" component="span" sx={{ opacity: 0.8, ml: 0.5, fontSize: '1rem' }}>
                           /100
                         </Typography>
                       </Typography>
@@ -238,9 +238,9 @@ const ProgressDashboard = () => {
                         variant="determinate"
                         value={progressData.currentProgress.scores.overall.current}
                         sx={{ 
-                          height: 8, 
-                          borderRadius: 4,
-                          mb: 2,
+                          height: 6, 
+                          borderRadius: 3,
+                          mb: 1,
                           backgroundColor: 'rgba(255,255,255,0.2)',
                           '& .MuiLinearProgress-bar': {
                             backgroundColor: 'rgba(255,255,255,0.9)'
@@ -296,18 +296,18 @@ const ProgressDashboard = () => {
                   transition={{ duration: 0.5, delay: 0.2 + (index * 0.1) }}
                 >
                   <Card sx={{ height: '100%' }}>
-                    <CardContent sx={{ p: 3 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                        <Typography variant="h6" component="h3">
+                    <CardContent sx={{ p: 1.5 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography variant="body2" component="h3" sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>
                           {skillLabels[skill]}
                         </Typography>
                         {getTrendIcon(scoreData.trend)}
                       </Box>
                       
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
+                      <Box sx={{ mb: 1.5 }}>
+                        <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
                           {Math.round(scoreData.current)}
-                          <Typography variant="h6" component="span" color="textSecondary">
+                          <Typography variant="body2" component="span" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
                             /100
                           </Typography>
                         </Typography>
@@ -317,9 +317,9 @@ const ProgressDashboard = () => {
                         variant="determinate"
                         value={scoreData.current}
                         sx={{ 
-                          height: 8, 
-                          borderRadius: 4,
-                          mb: 2,
+                          height: 6, 
+                          borderRadius: 3,
+                          mb: 1.5,
                           backgroundColor: 'rgba(0,0,0,0.1)'
                         }}
                       />
@@ -330,12 +330,14 @@ const ProgressDashboard = () => {
                           label={`Best: ${Math.round(scoreData.best)}`}
                           color="primary"
                           variant="outlined"
+                          sx={{ fontSize: '0.7rem', height: '24px' }}
                         />
                         <Chip
                           size="small"
                           label={`${scoreData.trend > 0 ? '+' : ''}${scoreData.trend.toFixed(1)}`}
                           color={getTrendColor(scoreData.trend)}
                           variant="filled"
+                          sx={{ fontSize: '0.7rem', height: '24px' }}
                         />
                       </Box>
                     </CardContent>
