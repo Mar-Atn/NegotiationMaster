@@ -418,7 +418,7 @@ const VoiceConversation = ({
       setError(null)
 
       // Get case-specific agent configuration from our backend
-      const response = await fetch('http://localhost:5001/api/voice/create-agent-session', {
+      const response = await fetch('/api/voice/create-agent-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

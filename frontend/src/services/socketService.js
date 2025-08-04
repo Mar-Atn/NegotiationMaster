@@ -14,7 +14,7 @@ class SocketService {
     // Connect to backend Socket.IO server
     // In development, connect directly to backend port since proxy doesn't work for WebSocket
     const socketUrl = process.env.NODE_ENV === 'development' 
-      ? 'http://localhost:5001' 
+      ? window.location.origin.replace(':3000', ':5001')
       : (process.env.REACT_APP_API_URL || window.location.origin)
     
     console.log('🔌 Connecting to Socket.IO server at:', socketUrl)
