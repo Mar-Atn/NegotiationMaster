@@ -202,72 +202,148 @@ const ProgressDashboard = () => {
       </AnimatePresence>
 
       {/* Current Scores Overview */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {Object.entries(progressData.currentProgress.scores).map(([skill, scoreData]) => {
-          const skillLabels = {
-            claiming_value: 'Claiming Value',
-            creating_value: 'Creating Value',
-            relationship: 'Relationship Management',
-            overall: 'Overall Score'
-          }
-          
-          return (
-            <Grid item xs={12} sm={6} md={3} key={skill}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <Card sx={{ height: '100%' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6" component="h3">
-                        {skillLabels[skill]}
+      <Box sx={{ mb: 4 }}>
+        {/* Overall Score - Prominently Featured at Top */}
+        {progressData.currentProgress.scores.overall && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <Card sx={{ 
+              mb: 3, 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)'
+            }}>
+              <CardContent sx={{ p: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h4" component="h3" sx={{ fontWeight: 'bold', color: 'white' }}>
+                    Overall Score
+                  </Typography>
+                  {getTrendIcon(progressData.currentProgress.scores.overall.trend)}
+                </Box>
+                
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="h2" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      {Math.round(progressData.currentProgress.scores.overall.current)}
+                      <Typography variant="h4" component="span" sx={{ opacity: 0.8, ml: 1 }}>
+                        /100
                       </Typography>
-                      {getTrendIcon(scoreData.trend)}
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
-                        {Math.round(scoreData.current)}
-                        <Typography variant="h6" component="span" color="textSecondary">
-                          /100
-                        </Typography>
-                      </Typography>
-                    </Box>
+                    </Typography>
                     
                     <LinearProgress
                       variant="determinate"
-                      value={scoreData.current}
+                      value={progressData.currentProgress.scores.overall.current}
                       sx={{ 
-                        height: 8, 
-                        borderRadius: 4,
+                        height: 12, 
+                        borderRadius: 6,
                         mb: 2,
-                        backgroundColor: 'rgba(0,0,0,0.1)'
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: 'rgba(255,255,255,0.9)'
+                        }
                       }}
                     />
-                    
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Chip
-                        size="small"
-                        label={`Best: ${Math.round(scoreData.best)}`}
-                        color="primary"
-                        variant="outlined"
+                  </Box>
+                  
+                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <Chip
+                      label={`Best: ${Math.round(progressData.currentProgress.scores.overall.best)}`}
+                      sx={{ 
+                        backgroundColor: 'rgba(255,255,255,0.2)', 
+                        color: 'white',
+                        fontWeight: 'bold'
+                      }}
+                    />
+                    <Chip
+                      label={`${progressData.currentProgress.scores.overall.trend > 0 ? '+' : ''}${progressData.currentProgress.scores.overall.trend.toFixed(1)}`}
+                      sx={{ 
+                        backgroundColor: getTrendColor(progressData.currentProgress.scores.overall.trend) === 'success' ? 'rgba(76, 175, 80, 0.8)' : 
+                                        getTrendColor(progressData.currentProgress.scores.overall.trend) === 'error' ? 'rgba(244, 67, 54, 0.8)' : 
+                                        'rgba(255,255,255,0.2)', 
+                        color: 'white',
+                        fontWeight: 'bold'
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Sub-Scores - Three Skills Below */}
+        <Grid container spacing={3}>
+          {['claiming_value', 'creating_value', 'relationship'].map((skill, index) => {
+            const skillLabels = {
+              claiming_value: 'Claiming Value',
+              creating_value: 'Creating Value',
+              relationship: 'Managing Relationships'
+            }
+            
+            const scoreData = progressData.currentProgress.scores[skill]
+            if (!scoreData) return null
+            
+            return (
+              <Grid item xs={12} md={4} key={skill}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 + (index * 0.1) }}
+                >
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h6" component="h3">
+                          {skillLabels[skill]}
+                        </Typography>
+                        {getTrendIcon(scoreData.trend)}
+                      </Box>
+                      
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
+                          {Math.round(scoreData.current)}
+                          <Typography variant="h6" component="span" color="textSecondary">
+                            /100
+                          </Typography>
+                        </Typography>
+                      </Box>
+                      
+                      <LinearProgress
+                        variant="determinate"
+                        value={scoreData.current}
+                        sx={{ 
+                          height: 8, 
+                          borderRadius: 4,
+                          mb: 2,
+                          backgroundColor: 'rgba(0,0,0,0.1)'
+                        }}
                       />
-                      <Chip
-                        size="small"
-                        label={`${scoreData.trend > 0 ? '+' : ''}${scoreData.trend.toFixed(1)}`}
-                        color={getTrendColor(scoreData.trend)}
-                        variant="filled"
-                      />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          )
-        })}
-      </Grid>
+                      
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Chip
+                          size="small"
+                          label={`Best: ${Math.round(scoreData.best)}`}
+                          color="primary"
+                          variant="outlined"
+                        />
+                        <Chip
+                          size="small"
+                          label={`${scoreData.trend > 0 ? '+' : ''}${scoreData.trend.toFixed(1)}`}
+                          color={getTrendColor(scoreData.trend)}
+                          variant="filled"
+                        />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid>
+            )
+          })}
+        </Grid>
+      </Box>
 
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

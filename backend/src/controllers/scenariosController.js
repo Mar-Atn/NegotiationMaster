@@ -1,6 +1,38 @@
 const db = require('../config/database')
 const logger = require('../config/logger')
 
+// Utility function to safely parse JSON fields
+const parseJsonSafely = (field, fieldName, scenarioId) => {
+  if (field === null || field === undefined || field === '') {
+    return field
+  }
+  
+  // If it's already an object, return as-is
+  if (typeof field === 'object') {
+    return field
+  }
+  
+  // If it's a string, try to parse it
+  if (typeof field === 'string') {
+    try {
+      return JSON.parse(field)
+    } catch (error) {
+      logger.error(`Failed to parse ${fieldName} as JSON for scenario ${scenarioId}`, {
+        fieldValue: field,
+        fieldType: typeof field,
+        error: error.message
+      })
+      return field // Return the original string if parsing fails
+    }
+  }
+  
+  logger.warn(`Unexpected field type for ${fieldName} in scenario ${scenarioId}`, {
+    fieldType: typeof field,
+    fieldValue: field
+  })
+  return field
+}
+
 class ScenariosController {
   async getAllScenarios (req, res, next) {
     try {
@@ -20,21 +52,13 @@ class ScenariosController {
         ])
         .orderBy('difficulty_level', 'asc')
 
-      // Parse JSON strings back to objects
+      // Parse JSON fields safely - some might already be objects from knex
       const scenariosWithParsedData = scenarios.map(scenario => ({
         ...scenario,
-        ai_character_config: typeof scenario.ai_character_config === 'string'
-          ? JSON.parse(scenario.ai_character_config)
-          : scenario.ai_character_config,
-        scenario_context: typeof scenario.scenario_context === 'string'
-          ? JSON.parse(scenario.scenario_context)
-          : scenario.scenario_context,
-        evaluation_criteria: typeof scenario.evaluation_criteria === 'string'
-          ? JSON.parse(scenario.evaluation_criteria)
-          : scenario.evaluation_criteria,
-        teaching_notes: typeof scenario.teaching_notes === 'string' && scenario.teaching_notes
-          ? JSON.parse(scenario.teaching_notes)
-          : scenario.teaching_notes
+        ai_character_config: parseJsonSafely(scenario.ai_character_config, 'ai_character_config', scenario.id),
+        scenario_context: parseJsonSafely(scenario.scenario_context, 'scenario_context', scenario.id),
+        evaluation_criteria: parseJsonSafely(scenario.evaluation_criteria, 'evaluation_criteria', scenario.id)
+        // Note: role1_instructions and teaching_notes are text fields, not JSON
       }))
 
       res.json({
@@ -74,21 +98,13 @@ class ScenariosController {
         })
       }
 
-      // Parse JSON strings back to objects
+      // Parse JSON fields safely using utility function
       const scenarioWithParsedData = {
         ...scenario,
-        ai_character_config: typeof scenario.ai_character_config === 'string'
-          ? JSON.parse(scenario.ai_character_config)
-          : scenario.ai_character_config,
-        scenario_context: typeof scenario.scenario_context === 'string'
-          ? JSON.parse(scenario.scenario_context)
-          : scenario.scenario_context,
-        evaluation_criteria: typeof scenario.evaluation_criteria === 'string'
-          ? JSON.parse(scenario.evaluation_criteria)
-          : scenario.evaluation_criteria,
-        teaching_notes: typeof scenario.teaching_notes === 'string' && scenario.teaching_notes
-          ? JSON.parse(scenario.teaching_notes)
-          : scenario.teaching_notes
+        ai_character_config: parseJsonSafely(scenario.ai_character_config, 'ai_character_config', scenario.id),
+        scenario_context: parseJsonSafely(scenario.scenario_context, 'scenario_context', scenario.id),
+        evaluation_criteria: parseJsonSafely(scenario.evaluation_criteria, 'evaluation_criteria', scenario.id)
+        // Note: role1_instructions and teaching_notes are text fields, not JSON
       }
 
       res.json({
@@ -128,9 +144,7 @@ class ScenariosController {
 
       const scenariosWithParsedData = scenarios.map(scenario => ({
         ...scenario,
-        ai_character_config: typeof scenario.ai_character_config === 'string'
-          ? JSON.parse(scenario.ai_character_config)
-          : scenario.ai_character_config
+        ai_character_config: parseJsonSafely(scenario.ai_character_config, 'ai_character_config', scenario.id)
       }))
 
       res.json({
@@ -234,18 +248,13 @@ class ScenariosController {
         })
       }
 
-      // Parse JSON strings back to objects
+      // Parse JSON fields safely using utility function
       const scenarioForAI = {
         ...scenario,
-        ai_character_config: typeof scenario.ai_character_config === 'string'
-          ? JSON.parse(scenario.ai_character_config)
-          : scenario.ai_character_config,
-        scenario_context: typeof scenario.scenario_context === 'string'
-          ? JSON.parse(scenario.scenario_context)
-          : scenario.scenario_context,
-        evaluation_criteria: typeof scenario.evaluation_criteria === 'string'
-          ? JSON.parse(scenario.evaluation_criteria)
-          : scenario.evaluation_criteria
+        ai_character_config: parseJsonSafely(scenario.ai_character_config, 'ai_character_config', scenario.id),
+        scenario_context: parseJsonSafely(scenario.scenario_context, 'scenario_context', scenario.id),
+        evaluation_criteria: parseJsonSafely(scenario.evaluation_criteria, 'evaluation_criteria', scenario.id)
+        // Note: role2_instructions is a text field, not JSON
       }
 
       logger.info('Scenario data accessed for AI character', {
@@ -291,21 +300,13 @@ class ScenariosController {
         })
       }
 
-      // Parse JSON strings back to objects
+      // Parse JSON fields safely using utility function
       const completeScenario = {
         ...scenario,
-        ai_character_config: typeof scenario.ai_character_config === 'string'
-          ? JSON.parse(scenario.ai_character_config)
-          : scenario.ai_character_config,
-        scenario_context: typeof scenario.scenario_context === 'string'
-          ? JSON.parse(scenario.scenario_context)
-          : scenario.scenario_context,
-        evaluation_criteria: typeof scenario.evaluation_criteria === 'string'
-          ? JSON.parse(scenario.evaluation_criteria)
-          : scenario.evaluation_criteria,
-        teaching_notes: typeof scenario.teaching_notes === 'string' && scenario.teaching_notes
-          ? JSON.parse(scenario.teaching_notes)
-          : scenario.teaching_notes
+        ai_character_config: parseJsonSafely(scenario.ai_character_config, 'ai_character_config', scenario.id),
+        scenario_context: parseJsonSafely(scenario.scenario_context, 'scenario_context', scenario.id),
+        evaluation_criteria: parseJsonSafely(scenario.evaluation_criteria, 'evaluation_criteria', scenario.id)
+        // Note: role1_instructions, role2_instructions, and teaching_notes are text fields, not JSON
       }
 
       logger.info('Complete scenario data accessed by admin', {
@@ -394,9 +395,7 @@ class ScenariosController {
       }
 
       if (teaching_notes !== undefined) {
-        updateData.teaching_notes = typeof teaching_notes === 'object'
-          ? JSON.stringify(teaching_notes)
-          : teaching_notes
+        updateData.teaching_notes = teaching_notes // teaching_notes is a text field, not JSON
       }
 
       const [updatedScenario] = await db('scenarios')
