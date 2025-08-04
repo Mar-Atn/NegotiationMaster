@@ -19,7 +19,7 @@ const { validateProgressQuery, validateAchievementParams } = require('../middlew
 router.get('/user/:userId', 
   authenticateToken,
   validateProgressQuery,
-  progressController.getUserProgress
+  progressController.getUserProgress.bind(progressController)
 );
 
 /**
@@ -31,7 +31,7 @@ router.get('/user/:userId',
  */
 router.get('/achievements',
   authenticateToken,
-  progressController.getAchievements
+  progressController.getAchievements.bind(progressController)
 );
 
 /**
@@ -42,7 +42,7 @@ router.get('/achievements',
 router.post('/achievement/:achievementId/mark-seen',
   authenticateToken,
   validateAchievementParams,
-  progressController.markAchievementSeen
+  progressController.markAchievementSeen.bind(progressController)
 );
 
 module.exports = router;

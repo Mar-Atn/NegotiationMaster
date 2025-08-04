@@ -95,7 +95,7 @@ const validateProgressQuery = (req, res, next) => {
   
   // Check user permission - users can only access their own data unless admin
   const { userId } = req.params;
-  if (userId !== req.user.id && req.user.role !== 'admin') {
+  if (userId !== req.user.userId && req.user.role !== 'admin') {
     return res.status(403).json({
       success: false,
       error: 'Access denied. You can only view your own progress.',

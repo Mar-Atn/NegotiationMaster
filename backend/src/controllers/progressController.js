@@ -16,6 +16,15 @@ class ProgressController {
       const { userId } = req.params;
       const { timeframe = '30d', skillDimension = 'all' } = req.query;
       
+      if (req.user.userId !== userId && req.user.role !== 'admin') {
+        logger.warn(`User ${req.user.userId} attempted to access progress for user ${userId}`);
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied: You can only view your own progress data',
+          code: 'ACCESS_DENIED'
+        });
+      }
+      
       logger.info(`Fetching progress data for user ${userId}, timeframe: ${timeframe}`);
       
       // Get current progress overview
