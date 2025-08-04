@@ -91,9 +91,22 @@ const Login = () => {
     >
       <Card sx={{ maxWidth: 400, width: '100%' }}>
         <CardContent sx={{ p: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
-            Login
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+            <Box
+              component="img"
+              src="/sigh-blue.png" 
+              alt="NegotiationMaster Logo" 
+              sx={{ 
+                height: { xs: '50px', sm: '60px' },
+                width: 'auto',
+                mb: 2,
+                maxWidth: '100%'
+              }} 
+            />
+            <Typography variant="h4" component="h1" gutterBottom align="center">
+              Login
+            </Typography>
+          </Box>
           
           {error && (
             <Alert 

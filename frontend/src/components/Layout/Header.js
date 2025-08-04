@@ -58,24 +58,42 @@ const Header = () => {
   return (
     <AppBar position="static">
       <Toolbar>
-        <Typography 
-          variant="h6" 
-          component="div" 
+        <Box 
           sx={{ 
             flexGrow: 1, 
             cursor: 'pointer',
-            fontSize: { xs: '1.1rem', md: '1.25rem' },
-            fontWeight: 500
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
           }}
           onClick={() => navigate('/')}
         >
-          <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-            NegotiationMaster
-          </Box>
-          <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
-            NM
-          </Box>
-        </Typography>
+          <Box
+            component="img"
+            src="/sigh-blue.png" 
+            alt="NegotiationMaster Logo" 
+            sx={{ 
+              height: { xs: '28px', sm: '32px' },
+              width: 'auto',
+              maxWidth: '100%'
+            }} 
+          />
+          <Typography 
+            variant="h6" 
+            component="div" 
+            sx={{ 
+              fontSize: { xs: '1.1rem', md: '1.25rem' },
+              fontWeight: 500
+            }}
+          >
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              NegotiationMaster
+            </Box>
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+              NM
+            </Box>
+          </Typography>
+        </Box>
         
         {isAuthenticated ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 } }}>
