@@ -265,141 +265,212 @@ const Dashboard = () => {
         }} />
       </Box>
       
-      {/* Primary Metrics - Enhanced Visual Hierarchy */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      {/* Primary Metrics - Compact Layout for Four Cards */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
         {/* Overall Score - Primary Focus */}
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={3}>
           <Card sx={{ 
             height: '100%',
             background: 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)',
             color: 'white',
-            transform: 'scale(1.02)',
-            boxShadow: '0 8px 24px rgba(76, 175, 80, 0.3)',
-            border: '2px solid rgba(255, 255, 255, 0.2)'
+            boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
-            <Box sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h2" sx={{ 
+            <Box sx={{ textAlign: 'center', p: 2 }}>
+              <Typography variant="h3" sx={{ 
                 fontWeight: 'bold', 
-                mb: 1,
-                fontSize: { xs: '2.5rem', md: '3rem' }
+                mb: 0.5,
+                fontSize: { xs: '1.8rem', md: '2.2rem' }
               }}>
                 {progress?.overall || 0}%
               </Typography>
-              <Typography variant="h5" sx={{ 
+              <Typography variant="h6" sx={{ 
                 fontWeight: 500, 
-                mb: 2,
-                opacity: 0.95
+                mb: 1,
+                opacity: 0.95,
+                fontSize: { xs: '0.9rem', md: '1rem' }
               }}>
                 Overall Score
               </Typography>
               {progress?.trends?.overall !== 0 && (
                 <Typography 
-                  variant="body2" 
+                  variant="caption" 
                   sx={{ 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
                     gap: 0.5,
-                    opacity: 0.9
+                    opacity: 0.9,
+                    fontSize: '0.7rem'
                   }}
                 >
                   {progress.trends.overall > 0 ? '📈' : '📉'} 
-                  {progress.trends.overall > 0 ? '+' : ''}{progress.trends.overall.toFixed(1)}/session
+                  {progress.trends.overall > 0 ? '+' : ''}{progress.trends.overall.toFixed(1)}
                 </Typography>
               )}
             </Box>
-            <CardContent sx={{ pt: 0, color: 'white' }}>
+            <CardContent sx={{ pt: 0, pb: 2, px: 2, color: 'white' }}>
               <LinearProgress 
                 variant="determinate" 
                 value={progress?.overall || 0}
                 sx={{ 
-                  mb: 2,
+                  mb: 1,
+                  height: 4,
                   backgroundColor: 'rgba(255, 255, 255, 0.3)',
                   '& .MuiLinearProgress-bar': {
                     backgroundColor: 'rgba(255, 255, 255, 0.9)'
                   }
                 }}
               />
-              <Typography variant="body2" align="center" sx={{ mb: 1, opacity: 0.9 }}>
-                {progress?.scenariosCompleted || 0}/{progress?.totalScenarios || 0} conversations completed
+              <Typography variant="caption" align="center" sx={{ opacity: 0.9, fontSize: '0.7rem', display: 'block' }}>
+                {progress?.scenariosCompleted || 0}/{progress?.totalScenarios || 0} done
               </Typography>
               {progress?.streak > 0 && (
-                <Typography variant="body2" sx={{ mt: 1, opacity: 0.95 }} align="center">
-                  🔥 {progress.streak} day streak!
+                <Typography variant="caption" sx={{ opacity: 0.95, fontSize: '0.7rem', display: 'block', textAlign: 'center' }}>
+                  🔥 {progress.streak} day streak
                 </Typography>
               )}
             </CardContent>
           </Card>
         </Grid>
         
-        {/* Secondary Metrics */}
-        <Grid item xs={12} md={6} lg={4}>
+        {/* Secondary Metrics - Compact Design */}
+        <Grid item xs={12} md={3}>
           <Card sx={{ 
             height: '100%',
             '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)'
+              transform: 'translateY(-1px)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
             },
             transition: 'all 0.3s ease'
           }}>
-            <ProgressTrendIndicator
-              current={progress?.claimingValue || 0}
-              trend={progress?.trends?.claimingValue || 0}
-              label="Claiming Value"
-            />
-            <CardContent sx={{ pt: 0 }}>
+            <Box sx={{ textAlign: 'center', p: 1.5 }}>
+              <Typography variant="h4" component="div" sx={{ 
+                fontWeight: 'bold',
+                fontSize: { xs: '1.5rem', md: '1.8rem' }
+              }}>
+                {progress?.claimingValue || 0}%
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontSize: '0.8rem' }}>
+                Claiming Value
+              </Typography>
+              {progress?.trends?.claimingValue !== 0 && (
+                <Typography 
+                  variant="caption" 
+                  color={progress?.trends?.claimingValue > 0 ? 'success.main' : 'error.main'}
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: 0.5,
+                    fontSize: '0.7rem'
+                  }}
+                >
+                  {progress.trends.claimingValue > 0 ? '📈' : '📉'} 
+                  {progress.trends.claimingValue > 0 ? '+' : ''}{progress.trends.claimingValue.toFixed(1)}
+                </Typography>
+              )}
+            </Box>
+            <CardContent sx={{ pt: 0, pb: 1.5, px: 1.5 }}>
               <LinearProgress 
                 variant="determinate" 
                 value={progress?.claimingValue || 0}
                 color={getScoreColor(progress?.claimingValue || 0)}
+                sx={{ height: 4 }}
               />
             </CardContent>
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={3}>
           <Card sx={{ 
             height: '100%',
             '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)'
+              transform: 'translateY(-1px)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
             },
             transition: 'all 0.3s ease'
           }}>
-            <ProgressTrendIndicator
-              current={progress?.creatingValue || 0}
-              trend={progress?.trends?.creatingValue || 0}
-              label="Creating Value"
-            />
-            <CardContent sx={{ pt: 0 }}>
+            <Box sx={{ textAlign: 'center', p: 1.5 }}>
+              <Typography variant="h4" component="div" sx={{ 
+                fontWeight: 'bold',
+                fontSize: { xs: '1.5rem', md: '1.8rem' }
+              }}>
+                {progress?.creatingValue || 0}%
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontSize: '0.8rem' }}>
+                Creating Value
+              </Typography>
+              {progress?.trends?.creatingValue !== 0 && (
+                <Typography 
+                  variant="caption" 
+                  color={progress?.trends?.creatingValue > 0 ? 'success.main' : 'error.main'}
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: 0.5,
+                    fontSize: '0.7rem'
+                  }}
+                >
+                  {progress.trends.creatingValue > 0 ? '📈' : '📉'} 
+                  {progress.trends.creatingValue > 0 ? '+' : ''}{progress.trends.creatingValue.toFixed(1)}
+                </Typography>
+              )}
+            </Box>
+            <CardContent sx={{ pt: 0, pb: 1.5, px: 1.5 }}>
               <LinearProgress 
                 variant="determinate" 
                 value={progress?.creatingValue || 0}
                 color={getScoreColor(progress?.creatingValue || 0)}
+                sx={{ height: 4 }}
               />
             </CardContent>
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={3}>
           <Card sx={{ 
             height: '100%',
             '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)'
+              transform: 'translateY(-1px)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
             },
             transition: 'all 0.3s ease'
           }}>
-            <ProgressTrendIndicator
-              current={progress?.managingRelationships || 0}
-              trend={progress?.trends?.managingRelationships || 0}
-              label="Managing Relationships"
-            />
-            <CardContent sx={{ pt: 0 }}>
+            <Box sx={{ textAlign: 'center', p: 1.5 }}>
+              <Typography variant="h4" component="div" sx={{ 
+                fontWeight: 'bold',
+                fontSize: { xs: '1.5rem', md: '1.8rem' }
+              }}>
+                {progress?.managingRelationships || 0}%
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontSize: '0.8rem' }}>
+                Managing Relationships
+              </Typography>
+              {progress?.trends?.managingRelationships !== 0 && (
+                <Typography 
+                  variant="caption" 
+                  color={progress?.trends?.managingRelationships > 0 ? 'success.main' : 'error.main'}
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: 0.5,
+                    fontSize: '0.7rem'
+                  }}
+                >
+                  {progress.trends.managingRelationships > 0 ? '📈' : '📉'} 
+                  {progress.trends.managingRelationships > 0 ? '+' : ''}{progress.trends.managingRelationships.toFixed(1)}
+                </Typography>
+              )}
+            </Box>
+            <CardContent sx={{ pt: 0, pb: 1.5, px: 1.5 }}>
               <LinearProgress 
                 variant="determinate" 
                 value={progress?.managingRelationships || 0}
                 color={getScoreColor(progress?.managingRelationships || 0)}
+                sx={{ height: 4 }}
               />
             </CardContent>
           </Card>
