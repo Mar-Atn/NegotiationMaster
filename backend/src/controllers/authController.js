@@ -38,9 +38,20 @@ class AuthController {
         .select(['id', 'email', 'username', 'first_name', 'last_name', 'created_at'])
         .first()
 
+      // Create initial progress record with baseline scores for motivation
       await db('user_progress').insert({
         id: require('crypto').randomUUID(),
-        user_id: user.id
+        user_id: user.id,
+        avg_claiming_value_score: 50.0,
+        avg_creating_value_score: 50.0,
+        avg_managing_relationships_score: 50.0,
+        avg_overall_score: 50.0,
+        best_claiming_value_score: 50.0,
+        best_creating_value_score: 50.0,
+        best_managing_relationships_score: 50.0,
+        best_overall_score: 50.0,
+        first_session_date: new Date(),
+        last_activity: new Date()
       })
 
       const { accessToken, refreshToken } = authService.generateTokens(user.id, user.email)

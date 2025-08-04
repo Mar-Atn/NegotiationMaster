@@ -653,65 +653,114 @@ Generate your comprehensive analysis now, demonstrating the sophisticated assess
   }
 
   generateSimplifiedAssessment(transcript, voiceMetrics, scenario) {
-    console.log('🔧 Generating simplified assessment from transcript analysis...')
+    console.log('🔧 CRITICAL: Generating strict simplified assessment...')
     
     if (!transcript) {
       return this.generateBasicAssessment('', voiceMetrics)
     }
 
-    // Simple text analysis for assessment
-    const words = transcript.toLowerCase().split(/\s+/)
-    const sentences = transcript.split(/[.!?]+/).filter(s => s.trim().length > 0)
-    
-    // Basic negotiation technique detection
-    const techniques = []
+    // STRICT text analysis for realistic assessment
+    const transcriptQuality = this.analyzeTranscriptQualityStrict(transcript)
     const lowerTranscript = transcript.toLowerCase()
     
-    // Claiming Value indicators
-    let claimingScore = 50
-    if (lowerTranscript.includes('batna') || lowerTranscript.includes('alternative') || lowerTranscript.includes('other options')) {
-      claimingScore += 15
-      techniques.push('BATNA Reference')
-    }
-    if (lowerTranscript.includes('position') || lowerTranscript.includes('firm on') || lowerTranscript.includes('need')) {
+    console.log('🎯 CRITICAL Transcript Analysis:', transcriptQuality)
+    
+    // DEMANDING BASE SCORES - Start much lower
+    let claimingScore = 10  // Much lower starting point
+    let creatingScore = 10  // Much lower starting point  
+    let relationshipScore = 15  // Slightly higher for basic human interaction
+    
+    // STRICT CONVERSATION LENGTH PENALTIES
+    if (transcriptQuality.messageCount < 5) {
+      // Severely penalize failed/aborted conversations
+      claimingScore = Math.min(claimingScore, 15)
+      creatingScore = Math.min(creatingScore, 15)
+      relationshipScore = Math.min(relationshipScore, 20)
+      console.log('❌ FAILED CONVERSATION PENALTY APPLIED')
+    } else if (transcriptQuality.messageCount >= 8) {
+      // Only give base increases for substantial conversations
       claimingScore += 10
-      techniques.push('Position Advocacy')
+      creatingScore += 10
+      relationshipScore += 8
     }
     
-    // Creating Value indicators  
-    let creatingScore = 55
-    if (lowerTranscript.includes('what matters') || lowerTranscript.includes('important to you') || lowerTranscript.includes('interests')) {
-      creatingScore += 20
+    // Initialize techniques array
+    const techniques = []
+    
+    // CLAIMING VALUE - Much stricter requirements
+    if (lowerTranscript.includes('batna') || lowerTranscript.includes('best alternative')) {
+      claimingScore += 20 // Reward actual BATNA usage
+      techniques.push('BATNA Reference')
+    } else if (lowerTranscript.includes('alternative') || lowerTranscript.includes('other options')) {
+      claimingScore += 10 // Lesser reward for generic alternatives
+      techniques.push('Alternative Mention')
+    }
+    
+    if (lowerTranscript.includes('firm on') || lowerTranscript.includes('non-negotiable') || lowerTranscript.includes('must have')) {
+      claimingScore += 12 // Reward clear position advocacy
+      techniques.push('Position Advocacy')
+    } else if (lowerTranscript.includes('position') || lowerTranscript.includes('need')) {
+      claimingScore += 5 // Minor reward for basic positioning
+    }
+    
+    // CREATING VALUE - Much stricter requirements
+    if (lowerTranscript.includes('what matters to you') || lowerTranscript.includes('important to you')) {
+      creatingScore += 18 // Reward actual interest exploration
       techniques.push('Interest Exploration')
+    } else if (lowerTranscript.includes('interests') || lowerTranscript.includes('priorities')) {
+      creatingScore += 8 // Lesser reward for basic interest mention
     }
-    if (lowerTranscript.includes('what if') || lowerTranscript.includes('alternative') || lowerTranscript.includes('options')) {
-      creatingScore += 15
+    
+    if (lowerTranscript.includes('what if we') || lowerTranscript.includes('suppose we') || lowerTranscript.includes('could we')) {
+      creatingScore += 15 // Reward collaborative option generation
       techniques.push('Option Generation')
+    } else if (lowerTranscript.includes('options') || lowerTranscript.includes('alternatives')) {
+      creatingScore += 6 // Basic reward for mentioning options
     }
-    if (lowerTranscript.includes('both parties') || lowerTranscript.includes('mutual') || lowerTranscript.includes('win-win')) {
-      creatingScore += 10
+    
+    if (lowerTranscript.includes('win-win') || lowerTranscript.includes('mutual benefit') || lowerTranscript.includes('both benefit')) {
+      creatingScore += 12 // Reward win-win thinking
       techniques.push('Mutual Benefit Focus')
     }
     
-    // Relationship Management indicators
-    let relationshipScore = 60
-    if (lowerTranscript.includes('understand') || lowerTranscript.includes('appreciate') || lowerTranscript.includes('respect')) {
-      relationshipScore += 15
-      techniques.push('Empathy Expression')
+    // RELATIONSHIP MANAGEMENT - Stricter standards
+    if (lowerTranscript.includes('understand your perspective') || lowerTranscript.includes('from your point of view')) {
+      relationshipScore += 15 // Reward genuine perspective-taking
+      techniques.push('Perspective Taking')
+    } else if (lowerTranscript.includes('understand') || lowerTranscript.includes('appreciate')) {
+      relationshipScore += 6 // Basic understanding
     }
+    
     if (lowerTranscript.includes('thank you') || lowerTranscript.includes('please') || lowerTranscript.includes('appreciate')) {
-      relationshipScore += 10
-      techniques.push('Politeness')
+      relationshipScore += 8 // Basic politeness
+      techniques.push('Professional Courtesy')
     }
-    if (lowerTranscript.includes('partnership') || lowerTranscript.includes('together') || lowerTranscript.includes('collaborate')) {
-      relationshipScore += 15
+    
+    if (lowerTranscript.includes('partnership') || lowerTranscript.includes('long-term relationship') || lowerTranscript.includes('work together')) {
+      relationshipScore += 12 // Reward relationship building
       techniques.push('Relationship Building')
     }
 
-    // Ensure scores are within bounds
-    claimingScore = Math.min(95, Math.max(20, claimingScore))
-    creatingScore = Math.min(95, Math.max(20, creatingScore))
-    relationshipScore = Math.min(95, Math.max(20, relationshipScore))
+    // STRICT QUALITY-BASED CAPS - Much more demanding
+    if (transcriptQuality.quality === 'failed' || transcriptQuality.quality === 'minimal') {
+      claimingScore = Math.min(claimingScore, 25)
+      creatingScore = Math.min(creatingScore, 25) 
+      relationshipScore = Math.min(relationshipScore, 30)
+    } else if (transcriptQuality.quality === 'basic') {
+      claimingScore = Math.min(claimingScore, 40)
+      creatingScore = Math.min(creatingScore, 40)
+      relationshipScore = Math.min(relationshipScore, 45)
+    } else if (transcriptQuality.quality === 'fair') {
+      claimingScore = Math.min(claimingScore, 55)
+      creatingScore = Math.min(creatingScore, 55)
+      relationshipScore = Math.min(relationshipScore, 60)
+    }
+    // Only good+ quality conversations can score above these thresholds
+    
+    // ABSOLUTE MINIMUMS AND MAXIMUMS
+    claimingScore = Math.min(85, Math.max(5, claimingScore))
+    creatingScore = Math.min(85, Math.max(5, creatingScore))
+    relationshipScore = Math.min(85, Math.max(10, relationshipScore))
     
     const overall = Math.round(
       (claimingScore * 0.35) + 
@@ -814,55 +863,96 @@ Generate your comprehensive analysis now, demonstrating the sophisticated assess
   identifyStrengths(claimingValue, creatingValue, relationshipManagement) {
     const strengths = []
     
-    if (claimingValue.score >= 75) {
-      strengths.push('Strong position advocacy and claiming value skills')
+    // MUCH STRICTER thresholds for identifying strengths
+    if (claimingValue.score >= 65) { // Was 75, now 65
+      strengths.push('Demonstrates competent position advocacy and value claiming')
+    } else if (claimingValue.score >= 45) {
+      strengths.push('Shows basic understanding of competitive negotiation')
     }
     
-    if (creatingValue.score >= 75) {
-      strengths.push('Excellent collaborative problem-solving abilities')
+    if (creatingValue.score >= 65) { // Was 75, now 65
+      strengths.push('Shows collaborative problem-solving capabilities') 
+    } else if (creatingValue.score >= 45) {
+      strengths.push('Demonstrates awareness of mutual benefit opportunities')
     }
     
-    if (relationshipManagement.score >= 75) {
-      strengths.push('Outstanding interpersonal and relationship management skills')
+    if (relationshipManagement.score >= 65) { // Was 75, now 65
+      strengths.push('Exhibits strong interpersonal communication skills')
+    } else if (relationshipManagement.score >= 45) {
+      strengths.push('Maintains professional communication approach')
     }
     
-    // Add technique-specific strengths
-    if (claimingValue.analysis.techniques.length > 3) {
-      strengths.push('Diverse tactical approach to negotiation')
+    // More demanding technique requirements
+    if (claimingValue.analysis.techniques.length > 2) { // Was 3, now 2
+      strengths.push('Uses multiple negotiation techniques')
     }
     
-    return strengths.length > 0 ? strengths : ['Demonstrated engagement in negotiation process']
+    // Realistic default for low-performing conversations
+    if (strengths.length === 0) {
+      const highestScore = Math.max(claimingValue.score, creatingValue.score, relationshipManagement.score)
+      if (highestScore >= 30) {
+        return ['Shows potential for negotiation skill development']
+      } else if (highestScore >= 20) {
+        return ['Participated in negotiation conversation']
+      } else {
+        return ['Initiated negotiation discussion']
+      }
+    }
+    
+    return strengths
   }
 
   identifyDevelopmentAreas(claimingValue, creatingValue, relationshipManagement) {
     const developmentAreas = []
     
-    if (claimingValue.score < 60) {
-      developmentAreas.push('Strengthen position advocacy and value claiming techniques')
+    // REALISTIC development area identification - most conversations need significant work
+    if (claimingValue.score < 50) { // Was 60, now 50 - more realistic threshold
+      developmentAreas.push('Develop fundamental position advocacy and value claiming skills')
+    } else if (claimingValue.score < 65) {
+      developmentAreas.push('Strengthen advanced claiming value techniques and strategic positioning')
     }
     
-    if (creatingValue.score < 60) {
-      developmentAreas.push('Focus on collaborative value creation and win-win solutions')
+    if (creatingValue.score < 50) { // Was 60, now 50
+      developmentAreas.push('Learn basic collaborative negotiation and interest identification')
+    } else if (creatingValue.score < 65) {
+      developmentAreas.push('Develop sophisticated value creation and win-win solution skills')
     }
     
-    if (relationshipManagement.score < 60) {
-      developmentAreas.push('Improve relationship building and interpersonal communication')
+    if (relationshipManagement.score < 50) { // Was 60, now 50
+      developmentAreas.push('Build foundational relationship management and communication skills')
+    } else if (relationshipManagement.score < 65) {
+      developmentAreas.push('Enhance advanced interpersonal and emotional intelligence capabilities')
     }
     
-    // Identify the weakest dimension for focused improvement
+    // Identify priority development areas more realistically
     const scores = { claimingValue: claimingValue.score, creatingValue: creatingValue.score, relationshipManagement: relationshipManagement.score }
     const weakest = Object.keys(scores).reduce((a, b) => scores[a] < scores[b] ? a : b)
+    const averageScore = (claimingValue.score + creatingValue.score + relationshipManagement.score) / 3
     
-    if (scores[weakest] < 70) {
+    if (scores[weakest] < 40) { // Much more demanding threshold
       const dimensionNames = {
-        claimingValue: 'competitive negotiation strategies',
-        creatingValue: 'collaborative problem-solving techniques',
-        relationshipManagement: 'interpersonal communication skills'
+        claimingValue: 'competitive negotiation fundamentals',
+        creatingValue: 'collaborative problem-solving basics', 
+        relationshipManagement: 'professional communication essentials'
       }
-      developmentAreas.push(`Priority focus area: ${dimensionNames[weakest]}`)
+      developmentAreas.push(`CRITICAL development need: ${dimensionNames[weakest]}`)
+    } else if (scores[weakest] < 55) {
+      const dimensionNames = {
+        claimingValue: 'strategic competitive negotiation',
+        creatingValue: 'advanced collaborative techniques',
+        relationshipManagement: 'sophisticated interpersonal skills'
+      }
+      developmentAreas.push(`Priority improvement area: ${dimensionNames[weakest]}`)
     }
     
-    return developmentAreas.length > 0 ? developmentAreas : ['Continue practicing to build confidence and fluency']
+    // Additional specific guidance based on overall performance
+    if (averageScore < 30) {
+      developmentAreas.push('Begin with negotiation fundamentals and basic communication skills')
+    } else if (averageScore < 50) {
+      developmentAreas.push('Focus on systematic skill development and regular practice')
+    }
+    
+    return developmentAreas.length > 0 ? developmentAreas : ['Continue developing comprehensive negotiation competencies']
   }
 
   async performEnhancedAssessment(transcript, voiceMetrics, scenario) {
@@ -922,21 +1012,180 @@ Generate your comprehensive analysis now, demonstrating the sophisticated assess
   }
 
   generateBasicAssessment(transcript, voiceMetrics) {
-    // Fallback basic assessment for error cases
+    // CRITICAL: Strict fallback assessment - no more generous defaults
     const transcriptLength = transcript ? transcript.length : 0
-    const baseScore = Math.min(90, Math.max(40, 50 + (transcriptLength / 100)))
+    const transcriptQuality = transcriptLength > 0 ? this.analyzeTranscriptQualityStrict(transcript) : {
+      messageCount: 0, quality: 'failed', negotiationTerms: 0
+    }
+    
+    console.log('🎯 BASIC ASSESSMENT - Transcript Analysis:', transcriptQuality)
+    
+    // HARSH reality-based scoring
+    let baseScore = 5 // Start very low
+    
+    if (transcriptLength < 50) {
+      baseScore = 10 // Extremely short = extremely low score
+    } else if (transcriptLength < 200) {
+      baseScore = 15 // Short conversations = low scores  
+    } else if (transcriptLength < 500) {
+      baseScore = 25 // Moderate length gets moderate base
+    } else {
+      baseScore = 35 // Only longer conversations get decent base
+    }
+    
+    // Quality-based adjustments
+    if (transcriptQuality.quality === 'failed') baseScore = Math.min(baseScore, 15)
+    else if (transcriptQuality.quality === 'minimal') baseScore = Math.min(baseScore, 25)
+    else if (transcriptQuality.quality === 'basic') baseScore = Math.min(baseScore, 40)
+    
+    // Much smaller variance and lower ceiling
+    const variance = 5 // Minimal random variation
     
     return {
-      claimingValue: { score: Math.round(baseScore + (Math.random() * 20 - 10)), analysis: { techniques: [] } },
-      creatingValue: { score: Math.round(baseScore + (Math.random() * 20 - 10)), analysis: { techniques: [] } },
-      relationshipManagement: { score: Math.round(baseScore + (Math.random() * 20 - 10)), analysis: { techniques: [] } },
-      overall: Math.round(baseScore + (Math.random() * 15 - 7.5)),
-      allTechniques: ['Basic conversation engagement'],
+      claimingValue: { 
+        score: Math.max(5, Math.min(70, baseScore + (Math.random() * variance - variance/2))), 
+        analysis: { techniques: transcriptLength > 100 ? ['Basic engagement'] : [] } 
+      },
+      creatingValue: { 
+        score: Math.max(5, Math.min(70, baseScore + (Math.random() * variance - variance/2))), 
+        analysis: { techniques: transcriptLength > 100 ? ['Basic engagement'] : [] } 
+      },
+      relationshipManagement: { 
+        score: Math.max(10, Math.min(70, baseScore + 5 + (Math.random() * variance - variance/2))), 
+        analysis: { techniques: transcriptLength > 50 ? ['Basic interaction'] : [] } 
+      },
+      overall: Math.max(5, Math.min(70, baseScore + (Math.random() * variance - variance/2))),
+      allTechniques: transcriptLength > 100 ? ['Basic conversation engagement'] : ['Minimal engagement'],
       conversationFlow: { totalSentences: Math.floor(transcriptLength / 50) },
-      emotionalIntelligence: { empathyScore: 50 },
+      emotionalIntelligence: { empathyScore: transcriptLength > 200 ? 35 : 20 },
       languagePatterns: { patterns: [] },
-      strengths: ['Engaged in negotiation process'],
-      developmentAreas: ['Continue practicing negotiation skills']
+      strengths: transcriptLength > 200 ? ['Attempted negotiation engagement'] : ['Initiated conversation'],
+      developmentAreas: ['Develop foundational negotiation skills', 'Practice extended conversations', 'Learn basic negotiation techniques']
+    }
+  }
+
+  /**
+   * STRICT transcript quality analysis for realistic scoring
+   * Matches the implementation in professionalAssessmentService.js
+   */
+  analyzeTranscriptQualityStrict(transcript) {
+    if (!transcript || typeof transcript !== 'string') {
+      return {
+        messageCount: 0,
+        averageMessageLength: 0,
+        questionCount: 0,
+        negotiationTerms: 0,
+        engagementLevel: 'none',
+        negotiationDepth: 'none',
+        quality: 'failed'
+      }
+    }
+
+    // Enhanced message parsing - more accurate conversation analysis
+    const lines = transcript.split(/\n/).filter(line => line.trim().length > 0)
+    let messages = []
+    
+    // Parse structured conversation format
+    for (const line of lines) {
+      // Match various conversation formats
+      const match = line.match(/^(?:User|user|Human|Assistant|AI|Agent|System)\s*[:;]?\s*(.+)$/i)
+      if (match && match[1].trim().length > 10) {
+        messages.push(match[1].trim())
+      } else if (line.trim().length > 15 && !line.includes(':')) {
+        // Unstructured but substantial content
+        messages.push(line.trim())
+      }
+    }
+    
+    // If no structured format found, try simple sentence splitting
+    if (messages.length === 0) {
+      messages = transcript.split(/[.!?]+/).filter(msg => msg.trim().length > 15)
+    }
+    
+    const messageCount = messages.length
+    const totalLength = transcript.length
+    const averageMessageLength = messageCount > 0 ? totalLength / messageCount : 0
+    
+    // Count questions (engagement indicator)
+    const questionCount = (transcript.match(/\?/g) || []).length
+    
+    // EXPANDED negotiation-specific terms with professional categories
+    const basicNegotiationTerms = [
+      'price', 'cost', 'budget', 'deal', 'offer', 'propose', 'negotiate', 
+      'terms', 'agreement', 'compromise', 'value', 'benefit'
+    ]
+    
+    const advancedNegotiationTerms = [
+      'trade-off', 'alternative', 'option', 'solution', 'interest', 'position', 
+      'BATNA', 'leverage', 'concession', 'mutual', 'win-win', 'stakes',
+      'priority', 'flexible', 'contingent', 'criteria', 'benchmark'
+    ]
+    
+    const professionalNegotiationTerms = [
+      'collaboration', 'partnership', 'strategic', 'long-term', 'relationship',
+      'objective criteria', 'market rate', 'industry standard', 'precedent',
+      'reciprocity', 'transparency', 'trust', 'credibility'
+    ]
+    
+    const lowerTranscript = transcript.toLowerCase()
+    
+    const basicTermCount = basicNegotiationTerms.filter(term => 
+      lowerTranscript.includes(term.toLowerCase())
+    ).length
+    
+    const advancedTermCount = advancedNegotiationTerms.filter(term => 
+      lowerTranscript.includes(term.toLowerCase())
+    ).length
+    
+    const professionalTermCount = professionalNegotiationTerms.filter(term => 
+      lowerTranscript.includes(term.toLowerCase())
+    ).length
+    
+    const totalNegotiationTerms = basicTermCount + advancedTermCount + professionalTermCount
+    
+    // STRICT engagement level assessment
+    let engagementLevel = 'none'
+    if (questionCount >= 8 && averageMessageLength > 60) engagementLevel = 'excellent'
+    else if (questionCount >= 5 && averageMessageLength > 40) engagementLevel = 'good'
+    else if (questionCount >= 3 && averageMessageLength > 25) engagementLevel = 'fair'
+    else if (questionCount >= 1 || averageMessageLength > 20) engagementLevel = 'minimal'
+    
+    // STRICT negotiation depth assessment
+    let negotiationDepth = 'none'
+    if (professionalTermCount >= 3 && advancedTermCount >= 4) negotiationDepth = 'professional'
+    else if (advancedTermCount >= 3 && basicTermCount >= 4) negotiationDepth = 'advanced'
+    else if (basicTermCount >= 3 && totalNegotiationTerms >= 5) negotiationDepth = 'basic'
+    else if (totalNegotiationTerms >= 2) negotiationDepth = 'minimal'
+    
+    // REALISTIC overall quality assessment - balanced but demanding thresholds
+    let quality = 'failed'
+    
+    if (messageCount >= 20 && engagementLevel === 'excellent' && negotiationDepth === 'professional') {
+      quality = 'exceptional' // Only truly outstanding conversations
+    } else if (messageCount >= 15 && engagementLevel === 'excellent' && negotiationDepth === 'advanced') {
+      quality = 'excellent'
+    } else if (messageCount >= 12 && engagementLevel === 'good' && negotiationDepth === 'advanced') {
+      quality = 'good'
+    } else if (messageCount >= 10 && (engagementLevel === 'good' || negotiationDepth === 'basic')) {
+      quality = 'fair'
+    } else if (messageCount >= 6 && (engagementLevel !== 'none' || negotiationDepth !== 'none')) {
+      quality = 'basic'
+    } else if (messageCount >= 3) {
+      quality = 'minimal'
+    }
+    // else remains 'failed'
+
+    return {
+      messageCount,
+      averageMessageLength: Math.round(averageMessageLength),
+      questionCount,
+      negotiationTerms: totalNegotiationTerms,
+      basicTerms: basicTermCount,
+      advancedTerms: advancedTermCount,
+      professionalTerms: professionalTermCount,
+      engagementLevel,
+      negotiationDepth,
+      quality
     }
   }
 }

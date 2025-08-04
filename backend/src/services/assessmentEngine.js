@@ -245,8 +245,12 @@ class AssessmentEngine {
       examples: []
     }
 
-    if (!transcript || transcript.length < 50) {
-      return { score: 0, analysis: { error: 'Insufficient conversation data' } }
+    // CRITICAL: Much stricter conversation length requirements
+    if (!transcript || transcript.length < 30) {
+      return { score: 5, analysis: { error: 'Failed conversation - insufficient data', techniques: [] } }
+    }
+    if (transcript.length < 100) {
+      return { score: 15, analysis: { error: 'Minimal conversation - extremely limited assessment possible', techniques: [] } }
     }
 
     // Parse conversation into structured format
@@ -307,8 +311,12 @@ class AssessmentEngine {
       examples: []
     }
 
-    if (!transcript || transcript.length < 50) {
-      return { score: 0, analysis: { error: 'Insufficient conversation data' } }
+    // CRITICAL: Much stricter conversation length requirements
+    if (!transcript || transcript.length < 30) {
+      return { score: 5, analysis: { error: 'Failed conversation - insufficient data', techniques: [] } }
+    }
+    if (transcript.length < 100) {
+      return { score: 15, analysis: { error: 'Minimal conversation - extremely limited assessment possible', techniques: [] } }
     }
 
     // Parse conversation into structured format
@@ -369,8 +377,12 @@ class AssessmentEngine {
       examples: []
     }
 
-    if (!transcript || transcript.length < 50) {
-      return { score: 0, analysis: { error: 'Insufficient conversation data' } }
+    // CRITICAL: Much stricter conversation length requirements  
+    if (!transcript || transcript.length < 30) {
+      return { score: 10, analysis: { error: 'Failed conversation - insufficient data', techniques: [] } }
+    }
+    if (transcript.length < 100) {
+      return { score: 20, analysis: { error: 'Minimal conversation - extremely limited assessment possible', techniques: [] } }
     }
 
     // Parse conversation into structured format

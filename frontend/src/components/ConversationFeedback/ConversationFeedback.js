@@ -24,7 +24,9 @@ import {
   Star,
   ExpandMore,
   ExpandLess,
-  Assessment
+  Assessment,
+  ErrorOutline,
+  Timer
 } from '@mui/icons-material'
 
 const ConversationFeedback = ({ 
@@ -330,27 +332,83 @@ const ConversationFeedback = ({
           </>
         )}
 
-        {/* Show Assessment Loading State */}
+        {/* Show Assessment Loading State - Enhanced */}
         {!assessmentData && assessmentLoading && (
-          <Card>
+          <Card sx={{ background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)' }}>
             <CardContent sx={{ textAlign: 'center', py: 6 }}>
-              <CircularProgress size={60} sx={{ mb: 2 }} />
-              <Typography variant="h6" sx={{ mb: 1 }}>
-                Generating Your Assessment...
+              <Box sx={{ position: 'relative', display: 'inline-flex', mb: 3 }}>
+                <CircularProgress size={60} thickness={4} />
+                <Box
+                  sx={{
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    right: 0,
+                    position: 'absolute',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Assessment sx={{ fontSize: '1.5rem', color: 'primary.main' }} />
+                </Box>
+              </Box>
+              <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+                🤖 AI is Analyzing Your Performance
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                This may take a moment while we analyze your performance
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 2, maxWidth: 400, mx: 'auto' }}>
+                We're processing your conversation and generating personalized insights.
+                This may take 2-3 minutes for voice conversations.
+              </Typography>
+              <Typography variant="caption" color="primary.main" sx={{ fontWeight: 500 }}>
+                Your data is secure and being analyzed by our professional assessment engine.
               </Typography>
             </CardContent>
           </Card>
         )}
 
-        {/* Show Assessment Error */}
+        {/* Show Assessment Error - Enhanced with Recovery Options */}
         {!assessmentData && assessmentError && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            Assessment processing encountered an issue: {assessmentError}
-            <br />You can still view your conversation transcript below.
-          </Alert>
+          <Card sx={{ mb: 2, border: '2px solid', borderColor: 'warning.main' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                <Box sx={{ color: 'warning.main', mt: 0.5 }}>
+                  <ErrorOutline sx={{ fontSize: '2rem' }} />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h6" sx={{ mb: 1, color: 'warning.dark', fontWeight: 600 }}>
+                    Assessment Processing Issue
+                  </Typography>
+                  <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.6 }}>
+                    {assessmentError}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Don't worry - your conversation data is safe and you can still review the full transcript below.
+                    Our team has been notified and is working to resolve processing issues.
+                  </Typography>
+                  
+                  <Stack direction="row" spacing={2} flexWrap="wrap">
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => window.location.reload()}
+                      startIcon={<RestartAlt />}
+                    >
+                      Retry Assessment
+                    </Button>
+                    <Button
+                      variant="text"
+                      size="small"
+                      onClick={() => setShowTranscripts(true)}
+                      startIcon={<Description />}
+                    >
+                      View Transcript
+                    </Button>
+                  </Stack>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
         )}
 
         {/* Transcript Section - Hidden Behind Button */}
@@ -408,12 +466,49 @@ const ConversationFeedback = ({
             )}
 
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-                <Button onClick={fetchTranscript} sx={{ ml: 2 }}>
-                  Retry
-                </Button>
-              </Alert>
+              <Card sx={{ mb: 2, border: '2px solid', borderColor: 'error.main' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                    <Box sx={{ color: 'error.main', mt: 0.5 }}>
+                      <ErrorOutline sx={{ fontSize: '1.5rem' }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" sx={{ mb: 1, color: 'error.dark', fontWeight: 600 }}>
+                        Transcript Loading Issue
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        {error}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                        This can happen if ElevenLabs is still processing your conversation. Voice conversations may take 2-3 minutes to process.
+                      </Typography>
+                      
+                      <Stack direction="row" spacing={1}>
+                        <Button 
+                          variant="contained" 
+                          size="small" 
+                          onClick={() => fetchTranscript()}
+                          startIcon={<RestartAlt />}
+                        >
+                          Retry Now
+                        </Button>
+                        <Button 
+                          variant="outlined" 
+                          size="small" 
+                          onClick={() => {
+                            setTimeout(() => fetchTranscript(), 30000)
+                            setError(null)
+                            setLoading(true)
+                          }}
+                          startIcon={<Timer />}
+                        >
+                          Wait 30s & Retry
+                        </Button>
+                      </Stack>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
             )}
 
             {transcript && transcript.transcript && (

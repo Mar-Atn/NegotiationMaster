@@ -7,7 +7,8 @@ import {
   Button,
   Typography,
   Alert,
-  Link
+  Link,
+  CircularProgress
 } from '@mui/material'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -95,8 +96,26 @@ const Login = () => {
           </Typography>
           
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
+            <Alert 
+              severity="error" 
+              sx={{ 
+                mb: 2,
+                borderRadius: 2,
+                '& .MuiAlert-message': {
+                  width: '100%'
+                }
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>
+                Sign in failed
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                {error}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Please check your credentials and try again. If you continue to have trouble, 
+                <Link component="button" variant="caption" sx={{ ml: 0.5 }} onClick={() => console.log('Contact support')}>contact support</Link>.
+              </Typography>
             </Alert>
           )}
 
@@ -131,10 +150,32 @@ const Login = () => {
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ 
+                mt: 3, 
+                mb: 2,
+                py: 1.5,
+                borderRadius: 2,
+                fontSize: '1rem',
+                fontWeight: 500,
+                textTransform: 'none',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                },
+                '&:disabled': {
+                  background: 'grey.300',
+                  color: 'grey.600'
+                },
+                transition: 'all 0.2s ease'
+              }}
               disabled={loading}
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={20} color="inherit" />
+                  Signing you in...
+                </Box>
+              ) : 'Sign In'}
             </Button>
             
             <Box textAlign="center">

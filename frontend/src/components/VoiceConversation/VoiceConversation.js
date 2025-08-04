@@ -1254,7 +1254,7 @@ const VoiceConversation = ({
               {character?.role?.replace('_', ' ') || 'Conversational AI'}
             </Typography>
 
-            {/* Enhanced Status */}
+            {/* Enhanced Status with ARIA live region */}
             <Typography 
               variant="body2" 
               sx={{ 
@@ -1262,6 +1262,9 @@ const VoiceConversation = ({
                 fontWeight: 500,
                 mb: 2
               }}
+              aria-live="polite"
+              aria-atomic="true"
+              role="status"
             >
               {getStatusText()}
             </Typography>
@@ -1451,33 +1454,48 @@ const VoiceConversation = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 2 }}>
-          {/* Pause/Resume Button */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            gap: { xs: 1.5, md: 2 }, 
+            mb: 2,
+            flexWrap: 'wrap',
+            px: { xs: 2, md: 0 }
+          }}>
+          {/* Pause/Resume Button - Enhanced for Mobile */}
           <IconButton
             onClick={isPaused ? handleResume : handlePause}
             disabled={sessionState === 'error' || sessionState === 'initializing'}
             sx={{
               backgroundColor: isPaused ? 'warning.main' : 'background.paper',
               color: isPaused ? 'white' : 'text.primary',
-              border: '1px solid',
+              border: '2px solid',
               borderColor: isPaused ? 'warning.main' : 'grey.200',
-              width: 64,
-              height: 64,
+              width: { xs: 56, md: 64 },
+              height: { xs: 56, md: 64 },
+              minWidth: 44, // WCAG touch target minimum
+              minHeight: 44,
               '&:hover': {
                 backgroundColor: isPaused ? 'warning.dark' : 'grey.50',
                 borderColor: isPaused ? 'warning.dark' : 'grey.300',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
+                transform: 'scale(1.05)'
+              },
+              '&:active': {
+                transform: 'scale(0.95)'
               },
               '&:disabled': {
                 backgroundColor: 'grey.100',
                 color: 'grey.400'
-              }
+              },
+              transition: 'all 0.2s ease'
             }}
+            aria-label={isPaused ? 'Resume conversation' : 'Pause conversation'}
           >
-            {isPaused ? <PlayArrow sx={{ fontSize: '2rem' }} /> : <Pause sx={{ fontSize: '2rem' }} />}
+            {isPaused ? <PlayArrow sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }} /> : <Pause sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }} />}
           </IconButton>
 
-          {/* Microphone Toggle Button */}
+          {/* Microphone Toggle Button - Enhanced for Mobile */}
           <IconButton
             onClick={() => {
               if (isRecognizing) {
@@ -1490,22 +1508,30 @@ const VoiceConversation = ({
             sx={{
               backgroundColor: isRecognizing ? 'success.main' : 'background.paper',
               color: isRecognizing ? 'white' : 'text.primary', 
-              border: '1px solid',
+              border: '2px solid',
               borderColor: isRecognizing ? 'success.main' : 'grey.200',
-              width: 64,
-              height: 64,
+              width: { xs: 56, md: 64 },
+              height: { xs: 56, md: 64 },
+              minWidth: 44, // WCAG touch target minimum
+              minHeight: 44,
               '&:hover': {
                 backgroundColor: isRecognizing ? 'success.dark' : 'grey.50',
                 borderColor: isRecognizing ? 'success.dark' : 'grey.300',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
+                transform: 'scale(1.05)'
+              },
+              '&:active': {
+                transform: 'scale(0.95)'
               },
               '&:disabled': {
                 backgroundColor: 'grey.100',
                 color: 'grey.400'
-              }
+              },
+              transition: 'all 0.2s ease'
             }}
+            aria-label={isRecognizing ? 'Turn off microphone' : 'Turn on microphone'}
           >
-            {isRecognizing ? <Mic sx={{ fontSize: '2rem' }} /> : <MicOff sx={{ fontSize: '2rem' }} />}
+            {isRecognizing ? <Mic sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }} /> : <MicOff sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }} />}
           </IconButton>
 
           {/* Manual Character Response Trigger (fallback for speech recognition issues) */}
@@ -1534,21 +1560,32 @@ const VoiceConversation = ({
             <SmartToy sx={{ fontSize: '2rem' }} />
           </IconButton>
 
-          {/* End Conversation Button */}
+          {/* End Conversation Button - Enhanced for Mobile */}
           <IconButton
             onClick={handleEndConversation}
             sx={{
               backgroundColor: 'error.main',
               color: 'white',
-              width: 64,
-              height: 64,
+              border: '2px solid',
+              borderColor: 'error.main',
+              width: { xs: 56, md: 64 },
+              height: { xs: 56, md: 64 },
+              minWidth: 44, // WCAG touch target minimum
+              minHeight: 44,
               '&:hover': {
                 backgroundColor: 'error.dark',
-                boxShadow: '0 2px 8px rgba(211, 47, 47, 0.3)'
-              }
+                borderColor: 'error.dark',
+                boxShadow: '0 4px 12px rgba(211, 47, 47, 0.3)',
+                transform: 'scale(1.05)'
+              },
+              '&:active': {
+                transform: 'scale(0.95)'
+              },
+              transition: 'all 0.2s ease'
             }}
+            aria-label="End conversation"
           >
-            <CallEnd sx={{ fontSize: '2rem' }} />
+            <CallEnd sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }} />
           </IconButton>
         </Box>
         </motion.div>

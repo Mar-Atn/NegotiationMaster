@@ -36,12 +36,35 @@
   background: #999999;
 }
 
-/* Ubuntu-style focus outlines */
+/* Enhanced Ubuntu-style focus outlines for accessibility */
 .MuiButton-root:focus-visible,
 .MuiIconButton-root:focus-visible,
-.MuiTextField-root input:focus {
-  outline: 2px solid #E95420;
+.MuiTextField-root input:focus,
+.MuiCard-root:focus-visible {
+  outline: 3px solid #E95420;
   outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .MuiButton-root,
+  .MuiCard-root,
+  .MuiAlert-root {
+    border: 2px solid;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Ubuntu-style animations */
@@ -237,5 +260,23 @@ h1, h2, h3, h4, h5, h6 {
   .MuiContainer-root {
     padding-left: 16px !important;
     padding-right: 16px !important;
+  }
+  
+  /* Enhanced touch targets for mobile */
+  .MuiButton-root,
+  .MuiIconButton-root {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+  
+  /* Improved text readability on mobile */
+  .MuiTypography-body1 {
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+  }
+  
+  .MuiTypography-body2 {
+    font-size: 0.9rem !important;
+    line-height: 1.5 !important;
   }
 }

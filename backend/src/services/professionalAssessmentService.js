@@ -606,10 +606,12 @@ class ProfessionalAssessmentService {
 
   // Additional helper methods
   determineSkillLevel(score) {
-    if (score >= 85) return 'expert'
-    if (score >= 70) return 'advanced'
-    if (score >= 55) return 'intermediate'
-    return 'beginner'
+    // CRITICAL RECALIBRATION - Much more demanding skill level thresholds
+    if (score >= 80) return 'expert'        // Only exceptional performance
+    if (score >= 65) return 'advanced'      // Strong demonstrated competency  
+    if (score >= 45) return 'intermediate'  // Basic competency shown
+    if (score >= 25) return 'beginner'      // Some engagement evident
+    return 'novice'                         // Minimal or failed performance
   }
 
   getStrongestDimension(scores) {
@@ -682,43 +684,97 @@ class ProfessionalAssessmentService {
 
   /**
    * Generate basic professional assessment as ultimate fallback
-   * Now with CRITICAL scoring based on actual conversation quality
+   * CRITICAL SCORING OVERHAUL - Dramatically more realistic and demanding
    */
   generateBasicProfessionalAssessment(transcript, scenario, userProfile) {
-    // Analyze transcript quality for realistic scoring
+    // Analyze transcript quality for STRICT realistic scoring
     const transcriptQuality = this.analyzeTranscriptQuality(transcript)
     
-    // Base score starts much lower and depends on conversation quality
-    let baseScore = 20 // Start very low for minimal conversations
+    console.log(`🎯 CRITICAL Assessment Analysis:`, transcriptQuality)
     
-    // Adjust based on conversation quality
-    if (transcriptQuality.messageCount > 20) baseScore += 20
-    if (transcriptQuality.messageCount > 10) baseScore += 15
-    if (transcriptQuality.messageCount > 5) baseScore += 10
-    if (transcriptQuality.averageMessageLength > 50) baseScore += 10
-    if (transcriptQuality.questionCount > 3) baseScore += 10
-    if (transcriptQuality.negotiationTerms > 2) baseScore += 15
+    // STRICT BASE SCORING - Start extremely low for failed conversations
+    let baseScore = 5 // Minimal starting point
     
-    // Cap at reasonable maximum for fallback assessment
-    baseScore = Math.min(baseScore, 75)
+    // DEMANDING CONVERSATION LENGTH REQUIREMENTS
+    if (transcriptQuality.messageCount < 3) {
+      // Aborted/failed conversations: 5-15 points only
+      baseScore = Math.min(15, baseScore + transcriptQuality.messageCount * 2)
+      console.log(`❌ FAILED CONVERSATION: ${transcriptQuality.messageCount} messages = ${baseScore} points`)
+    } else if (transcriptQuality.messageCount < 8) {
+      // Very short conversations: 15-25 points
+      baseScore = 15 + (transcriptQuality.messageCount - 3) * 2
+      console.log(`⚠️ VERY SHORT CONVERSATION: ${transcriptQuality.messageCount} messages = ${baseScore} points`)
+    } else if (transcriptQuality.messageCount < 15) {
+      // Short conversations: 25-40 points
+      baseScore = 25 + (transcriptQuality.messageCount - 8) * 2
+      console.log(`📝 SHORT CONVERSATION: ${transcriptQuality.messageCount} messages = ${baseScore} points`)
+    } else if (transcriptQuality.messageCount < 25) {
+      // Moderate conversations: 40-55 points
+      baseScore = 40 + (transcriptQuality.messageCount - 15) * 1.5
+      console.log(`💬 MODERATE CONVERSATION: ${transcriptQuality.messageCount} messages = ${baseScore} points`)
+    } else {
+      // Longer conversations: 55-65 points base
+      baseScore = 55 + Math.min(10, (transcriptQuality.messageCount - 25) * 0.5)
+      console.log(`📚 LONGER CONVERSATION: ${transcriptQuality.messageCount} messages = ${baseScore} points`)
+    }
     
-    const variance = Math.max(5, Math.floor(baseScore * 0.15)) // Smaller variance for low scores
+    // STRICT QUALITY BONUSES - Much harder to earn
+    if (transcriptQuality.averageMessageLength > 80) baseScore += 5 // Substantial messages
+    if (transcriptQuality.averageMessageLength > 120) baseScore += 5 // Very detailed messages
+    
+    if (transcriptQuality.questionCount > 5) baseScore += 8 // Good engagement
+    if (transcriptQuality.questionCount > 10) baseScore += 7 // Excellent engagement
+    
+    // NEGOTIATION TERM REQUIREMENTS - Much stricter
+    if (transcriptQuality.negotiationTerms < 2) {
+      baseScore -= 10 // Penalty for no real negotiation
+      console.log(`❌ INSUFFICIENT NEGOTIATION TERMS: ${transcriptQuality.negotiationTerms} terms, -10 penalty`)
+    } else if (transcriptQuality.negotiationTerms >= 5) {
+      baseScore += 8 // Bonus only for significant negotiation vocabulary
+    } else if (transcriptQuality.negotiationTerms >= 8) {
+      baseScore += 12 // Major bonus for sophisticated vocabulary
+    }
+    
+    // PROFESSIONAL COMPETENCY CAPS - More realistic thresholds
+    if (transcriptQuality.quality === 'failed') {
+      baseScore = Math.min(baseScore, 15) // Failed conversations capped at 15
+    } else if (transcriptQuality.quality === 'minimal') {
+      baseScore = Math.min(baseScore, 25) // Minimal conversations capped at 25
+    } else if (transcriptQuality.quality === 'basic') {
+      baseScore = Math.min(baseScore, 40) // Basic conversations capped at 40
+    } else if (transcriptQuality.quality === 'fair') {
+      baseScore = Math.min(baseScore, 60) // Fair conversations capped at 60
+    } else if (transcriptQuality.quality === 'good') {
+      baseScore = Math.min(baseScore, 75) // Good conversations capped at 75
+    } else if (transcriptQuality.quality === 'excellent') {
+      baseScore = Math.min(baseScore, 85) // Excellent conversations capped at 85
+    }
+    // Only exceptional conversations can score above 85
+    
+    // MUCH SMALLER VARIANCE for failed conversations
+    const variance = transcriptQuality.messageCount < 8 ? 3 : Math.max(3, Math.floor(baseScore * 0.08))
     
     const scores = {
-      overall: Math.max(15, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2)),
-      claimingValue: Math.max(10, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2)),
-      creatingValue: Math.max(10, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2)),
-      relationshipManagement: Math.max(15, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2))
+      overall: Math.max(5, Math.min(85, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2))),
+      claimingValue: Math.max(5, Math.min(85, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2))),
+      creatingValue: Math.max(5, Math.min(85, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2))),
+      relationshipManagement: Math.max(5, Math.min(85, baseScore + Math.floor(Math.random() * variance) - Math.floor(variance/2)))
     }
 
-    console.log(`🎯 Critical Assessment - Transcript Quality:`, transcriptQuality)
-    console.log(`📊 Resulting Scores:`, scores)
+    console.log(`🎯 CRITICAL SCORING RESULTS:`, {
+      quality: transcriptQuality.quality,
+      messageCount: transcriptQuality.messageCount,
+      negotiationTerms: transcriptQuality.negotiationTerms,
+      baseScore,
+      finalScores: scores
+    })
 
     return this.restructureToMethodology({ scores }, scenario, userProfile)
   }
 
   /**
-   * Analyze transcript quality for realistic scoring
+   * Analyze transcript quality for STRICT realistic scoring
+   * CRITICAL OVERHAUL - Much more demanding quality assessment
    */
   analyzeTranscriptQuality(transcript) {
     if (!transcript || typeof transcript !== 'string') {
@@ -727,14 +783,32 @@ class ProfessionalAssessmentService {
         averageMessageLength: 0,
         questionCount: 0,
         negotiationTerms: 0,
-        quality: 'minimal'
+        engagementLevel: 'none',
+        negotiationDepth: 'none',
+        quality: 'failed'
       }
     }
 
-    // Count messages (assuming format with role indicators)
-    const messages = transcript.split(/\n|user:|assistant:|User:|Assistant:/).filter(msg => 
-      msg.trim().length > 5
-    )
+    // Enhanced message parsing - more accurate conversation analysis
+    const lines = transcript.split(/\n/).filter(line => line.trim().length > 0)
+    let messages = []
+    
+    // Parse structured conversation format
+    for (const line of lines) {
+      // Match various conversation formats
+      const match = line.match(/^(?:User|user|Human|Assistant|AI|Agent|System)\s*[:;]?\s*(.+)$/i)
+      if (match && match[1].trim().length > 10) {
+        messages.push(match[1].trim())
+      } else if (line.trim().length > 15 && !line.includes(':')) {
+        // Unstructured but substantial content
+        messages.push(line.trim())
+      }
+    }
+    
+    // If no structured format found, try simple sentence splitting
+    if (messages.length === 0) {
+      messages = transcript.split(/[.!?]+/).filter(msg => msg.trim().length > 15)
+    }
     
     const messageCount = messages.length
     const totalLength = transcript.length
@@ -743,26 +817,82 @@ class ProfessionalAssessmentService {
     // Count questions (engagement indicator)
     const questionCount = (transcript.match(/\?/g) || []).length
     
-    // Count negotiation-specific terms
-    const negotiationTerms = [
+    // EXPANDED negotiation-specific terms with professional categories
+    const basicNegotiationTerms = [
       'price', 'cost', 'budget', 'deal', 'offer', 'propose', 'negotiate', 
-      'terms', 'agreement', 'compromise', 'value', 'benefit', 'trade-off',
-      'alternative', 'option', 'solution', 'interest', 'position', 'BATNA'
-    ].filter(term => 
-      transcript.toLowerCase().includes(term.toLowerCase())
+      'terms', 'agreement', 'compromise', 'value', 'benefit'
+    ]
+    
+    const advancedNegotiationTerms = [
+      'trade-off', 'alternative', 'option', 'solution', 'interest', 'position', 
+      'BATNA', 'leverage', 'concession', 'mutual', 'win-win', 'stakes',
+      'priority', 'flexible', 'contingent', 'criteria', 'benchmark'
+    ]
+    
+    const professionalNegotiationTerms = [
+      'collaboration', 'partnership', 'strategic', 'long-term', 'relationship',
+      'objective criteria', 'market rate', 'industry standard', 'precedent',
+      'reciprocity', 'transparency', 'trust', 'credibility'
+    ]
+    
+    const lowerTranscript = transcript.toLowerCase()
+    
+    const basicTermCount = basicNegotiationTerms.filter(term => 
+      lowerTranscript.includes(term.toLowerCase())
     ).length
-
-    let quality = 'minimal'
-    if (messageCount > 15 && negotiationTerms > 5) quality = 'excellent'
-    else if (messageCount > 10 && negotiationTerms > 3) quality = 'good' 
-    else if (messageCount > 5 && negotiationTerms > 1) quality = 'fair'
-    else if (messageCount > 2) quality = 'basic'
+    
+    const advancedTermCount = advancedNegotiationTerms.filter(term => 
+      lowerTranscript.includes(term.toLowerCase())
+    ).length
+    
+    const professionalTermCount = professionalNegotiationTerms.filter(term => 
+      lowerTranscript.includes(term.toLowerCase())
+    ).length
+    
+    const totalNegotiationTerms = basicTermCount + advancedTermCount + professionalTermCount
+    
+    // STRICT engagement level assessment
+    let engagementLevel = 'none'
+    if (questionCount >= 8 && averageMessageLength > 60) engagementLevel = 'excellent'
+    else if (questionCount >= 5 && averageMessageLength > 40) engagementLevel = 'good'
+    else if (questionCount >= 3 && averageMessageLength > 25) engagementLevel = 'fair'
+    else if (questionCount >= 1 || averageMessageLength > 20) engagementLevel = 'minimal'
+    
+    // STRICT negotiation depth assessment
+    let negotiationDepth = 'none'
+    if (professionalTermCount >= 3 && advancedTermCount >= 4) negotiationDepth = 'professional'
+    else if (advancedTermCount >= 3 && basicTermCount >= 4) negotiationDepth = 'advanced'
+    else if (basicTermCount >= 3 && totalNegotiationTerms >= 5) negotiationDepth = 'basic'
+    else if (totalNegotiationTerms >= 2) negotiationDepth = 'minimal'
+    
+    // REALISTIC overall quality assessment - balanced but demanding thresholds
+    let quality = 'failed'
+    
+    if (messageCount >= 20 && engagementLevel === 'excellent' && negotiationDepth === 'professional') {
+      quality = 'exceptional' // Only truly outstanding conversations
+    } else if (messageCount >= 15 && engagementLevel === 'excellent' && negotiationDepth === 'advanced') {
+      quality = 'excellent'
+    } else if (messageCount >= 12 && engagementLevel === 'good' && negotiationDepth === 'advanced') {
+      quality = 'good'
+    } else if (messageCount >= 10 && (engagementLevel === 'good' || negotiationDepth === 'basic')) {
+      quality = 'fair'
+    } else if (messageCount >= 6 && (engagementLevel !== 'none' || negotiationDepth !== 'none')) {
+      quality = 'basic'
+    } else if (messageCount >= 3) {
+      quality = 'minimal'
+    }
+    // else remains 'failed'
 
     return {
       messageCount,
       averageMessageLength: Math.round(averageMessageLength),
       questionCount,
-      negotiationTerms,
+      negotiationTerms: totalNegotiationTerms,
+      basicTerms: basicTermCount,
+      advancedTerms: advancedTermCount,
+      professionalTerms: professionalTermCount,
+      engagementLevel,
+      negotiationDepth,
       quality
     }
   }

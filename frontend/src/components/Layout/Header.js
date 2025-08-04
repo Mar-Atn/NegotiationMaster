@@ -61,15 +61,33 @@ const Header = () => {
         <Typography 
           variant="h6" 
           component="div" 
-          sx={{ flexGrow: 1, cursor: 'pointer' }}
+          sx={{ 
+            flexGrow: 1, 
+            cursor: 'pointer',
+            fontSize: { xs: '1.1rem', md: '1.25rem' },
+            fontWeight: 500
+          }}
           onClick={() => navigate('/')}
         >
-          NegotiationMaster
+          <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+            NegotiationMaster
+          </Box>
+          <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+            NM
+          </Box>
         </Typography>
         
         {isAuthenticated ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Button color="inherit" onClick={handleDashboard}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 } }}>
+            <Button 
+              color="inherit" 
+              onClick={handleDashboard}
+              sx={{ 
+                display: { xs: 'none', md: 'flex' },
+                textTransform: 'none',
+                fontWeight: 500
+              }}
+            >
               Dashboard
             </Button>
             
@@ -77,17 +95,45 @@ const Header = () => {
               color="inherit" 
               onClick={handleMyProgress}
               startIcon={<TrendingUp />}
+              sx={{ 
+                display: { xs: 'none', sm: 'flex' },
+                textTransform: 'none',
+                fontWeight: 500
+              }}
             >
-              My Progress
+              <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>
+                My Progress
+              </Box>
+              <Box component="span" sx={{ display: { xs: 'inline', md: 'none' } }}>
+                Progress
+              </Box>
             </Button>
             
             <Button 
               color="inherit" 
               onClick={handleTestMenu}
               startIcon={<BugReport />}
+              sx={{ 
+                display: { xs: 'none', lg: 'flex' },
+                textTransform: 'none',
+                fontWeight: 500
+              }}
             >
               Test
             </Button>
+            
+            {/* Mobile Dashboard Button */}
+            <IconButton
+              color="inherit"
+              onClick={handleDashboard}
+              sx={{ 
+                display: { xs: 'flex', md: 'none' },
+                mr: 1
+              }}
+              aria-label="Dashboard"
+            >
+              <TrendingUp />
+            </IconButton>
             
             <IconButton
               size="large"
@@ -97,7 +143,11 @@ const Header = () => {
               onClick={handleMenu}
               color="inherit"
             >
-              <Avatar sx={{ width: 32, height: 32 }}>
+              <Avatar sx={{ 
+                width: { xs: 28, md: 32 }, 
+                height: { xs: 28, md: 32 },
+                fontSize: { xs: '0.875rem', md: '1rem' }
+              }}>
                 {user?.firstName?.charAt(0)}
               </Avatar>
             </IconButton>
